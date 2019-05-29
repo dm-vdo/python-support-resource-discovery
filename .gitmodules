@@ -1,0 +1,3 @@
+[submodule "factory"]
+	path = factory
+	url = git+ssh://git.engineering.redhat.com/srv/git/users/jshimkus/python/factory
