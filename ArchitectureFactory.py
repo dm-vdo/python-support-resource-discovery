@@ -12,6 +12,11 @@ class ArchitectureFactory(Factory):
   # Overridden methods
   ####################################################################
   @classmethod
+  def _defaultChoice(cls):
+    return architectures.X86.X86_64
+
+  ####################################################################
+  @classmethod
   def _rootClass(cls):
     return Architecture
 
