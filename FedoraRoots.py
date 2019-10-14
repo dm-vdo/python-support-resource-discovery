@@ -7,19 +7,36 @@ from RepoRoots import RepoRoots
 class FedoraRoots(RepoRoots):
   __FEDORA_MINIMUM_MAJOR = 28
 
+  # We cache the results of determining the various roots to avoid
+  # having to constantly perform network queries.
+  __cachedLatest = {}
+  __cachedReleased = {}
+  
   ####################################################################
   # Overridden methods
   ####################################################################
   @classmethod
   def _availableLatest(cls, architecture):
-    return cls._availableCommon("{0}/development".format(
-                                  cls._startingPath(architecture)))
-  
+    try:
+      available = cls.__cachedLatest[architecture]
+    except KeyError:
+      available = cls._availableCommon("{0}/development".format(
+                                        cls._startingPath(architecture)))
+      cls.__cachedLatest[architecture] = available                                        
+
+    return available
+    
   ####################################################################
   @classmethod
   def _availableReleased(cls, architecture):
-    return cls._availableCommon("{0}/releases".format(
-                                  cls._startingPath(architecture)))
+    try:
+      available = cls.__cachedReleased[architecture]
+    except KeyError:
+      available = cls._availableCommon("{0}/releases".format(
+                                        cls._startingPath(architecture)))
+      cls.__cachedReleased[architecture] = available                                        
+
+    return available
   
   ####################################################################
   @classmethod
