@@ -16,10 +16,13 @@ class RhelRoots(RepoRoots):
     data = cls._path_contents("{0}/".format(path))
 
     # Find all the latest greater than or equal to the RHEL minimum major
-    # (limited to no less than 7).
+    # (limited to no less than 7, RHEL 7 being the major version first
+    # incorporating VDO).
     regex = r"(?i)<a\s+href=\"(latest-RHEL-(\d+)\.(\d+)(|\.\d+))/\">\1/</a>"
     matches = filter(lambda x: int(x[1]) >= max(7, cls.__RHEL_MINIMUM_MAJOR),
                      re.findall(regex, data))
+    # RHEL 7.5 is the first RHEL release that incorporated VDO; exclude any
+    # 7.x versions where x is less than 5.
     matches = filter(lambda x: not ((int(x[1]) == 7) and (int(x[2]) < 5)), 
                      matches)
     matches = list(matches)
@@ -42,7 +45,8 @@ class RhelRoots(RepoRoots):
     data = cls._path_contents("{0}/".format(path))
 
     # Find all the released versions greater than or equal to the RHEL minimum 
-    # major (limited to no less than 7) and then find their minors.
+    # major (limited to no less than 7, RHEL 7 being the major version first
+    # incorporating VDO) and then find their minors.
     available = {}
     regex = r"(?i)<a\s+href=\"(released-RHEL-(\d+))/\">\1/</a>"
     for release in filter(

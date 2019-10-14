@@ -34,7 +34,8 @@ class FedoraRoots(RepoRoots):
     data = cls._path_contents("{0}/".format(path))
 
     # Find all the released versions greater than or equal to the Fedora
-    # minimum major (limited to no less than 28).
+    # minimum major (limited to no less than 28, Fedora 28 being the version
+    # first incorporating VDO).
     regex = r"(?i)<a\s+href=\"(\d+)/\">\1/</a>"
     available = { x : cls._availableUri(path, x)
                   for x in filter(
