@@ -1,78 +1,70 @@
 import re
 
-from RepoRoots import RepoRoots
+from .RepoRoots import RepoRoots
 
 ######################################################################
 ######################################################################
 class RhelRoots(RepoRoots):
+  # Exclude any release prior to the combined minimum major and minor.
   __RHEL_MINIMUM_MAJOR = 7
+  __RHEL_MINIMUM_MINOR = 5
 
-  # We cache the results of determining the various roots to avoid
-  # having to constantly perform network queries.
-  __cachedLatest = {}
-  __cachedReleased = {}
-    
   ####################################################################
   # Overridden methods
   ####################################################################
   @classmethod
   def _availableLatest(cls, architecture):
-    try:
-      available = cls.__cachedLatest[architecture]
-    except KeyError:
-      path = cls._startingPath()
-      data = cls._path_contents("{0}/".format(path))
+    path = cls._startingPath()
+    data = cls._path_contents("{0}/".format(path))
 
-      # Find all the latest greater than or equal to the RHEL minimum major
-      # (limited to no less than 7, RHEL 7 being the major version first
-      # incorporating VDO).
-      regex = r"(?i)<a\s+href=\"(latest-RHEL-(\d+)\.(\d+)(|\.\d+))/\">\1/</a>"
-      matches = filter(lambda x: int(x[1]) >= max(7, cls.__RHEL_MINIMUM_MAJOR),
-                       re.findall(regex, data))
-      # RHEL 7.5 is the first RHEL release that incorporated VDO; exclude any
-      # 7.x versions where x is less than 5.
-      matches = filter(lambda x: not ((int(x[1]) == 7) and (int(x[2]) < 5)), 
-                       matches)
-      matches = list(matches)
-    
-      available = {}
-      for major in range(int(min(matches)[1]), int(max(matches)[1]) + 1):
-        majorMatches = list(filter(lambda x: int(x[1]) == major, matches))
-        for minor in range(int(min(majorMatches)[2]), 
-                           int(max(majorMatches)[2]) + 1):
-          minorMatches = list(filter(lambda x: int(x[2]) == minor, 
-                                     majorMatches))
-          maxMatch = max(minorMatches)
-          available["{0}.{1}".format(maxMatch[1], maxMatch[2])] = (
-            "http://{0}{1}/{2}/compose".format(cls._host(), path, maxMatch[0]))
+    # Find all the latest greater than or equal to the RHEL minimum major.
+    regex = r"(?i)<a\s+href=\"(latest-RHEL-(\d+)\.(\d+)(|\.\d+))/\">\1/</a>"
+    matches = filter(lambda x: int(x[1]) >= cls.__RHEL_MINIMUM_MAJOR,
+                     re.findall(regex, data))
+    # Convert the major/minor/zStream to integers.
+    matches = [(x[0], 
+                int(x[1]), 
+                int(x[2]),
+                int(x[3].lstrip(".")) if x[3] != "" else 0) for x in matches]
+    # Exclude any minimum major versions that have a minor less than the
+    # minimum minor.
+    matches = filter(lambda x: not ((x[1] == cls.__RHEL_MINIMUM_MAJOR)
+                                    and (x[2] < cls.__RHEL_MINIMUM_MINOR)), 
+                     matches)
+    matches = list(matches)
+  
+    available = {}
+    majors = [x[1] for x in matches]
+    for major in range(min(majors), max(majors) + 1):
+      majorMatches = list(filter(lambda x: x[1] == major, matches))
+      minors = [x[2] for x in majorMatches]
+      for minor in range(min(minors), max(minors) + 1):
+        minorMatches = list(filter(lambda x: x[2] == minor, majorMatches))
+        maxZStream = max([x[3] for x in minorMatches])
+        maxMatch = list(filter(lambda x: x[3] == maxZStream, minorMatches))
+        maxMatch = maxMatch[0]
+        available["{0}.{1}".format(maxMatch[1], maxMatch[2])] = (
+          "http://{0}{1}/{2}/compose".format(cls._host(), path, maxMatch[0]))
 
-      cls.__cachedLatest[architecture] = available                                        
-
-    return available.copy()
+    return available
   
   ####################################################################
   @classmethod
   def _availableReleased(cls, architecture):
-    try:
-      available = cls.__cachedReleased[architecture]
-    except KeyError:
-      path = cls._startingPath()
-      data = cls._path_contents("{0}/".format(path))
+    path = cls._startingPath()
+    data = cls._path_contents("{0}/".format(path))
 
-      # Find all the released versions greater than or equal to the RHEL
-      # minimum major (limited to no less than 7, RHEL 7 being the major
-      # version first incorporating VDO) and then find their minors.
-      available = {}
-      regex = r"(?i)<a\s+href=\"(released-RHEL-(\d+))/\">\1/</a>"
-      for release in filter(
-                      lambda x: int(x[1]) >= max(7, cls.__RHEL_MINIMUM_MAJOR),
-                      re.findall(regex, data)):
-        available.update(cls._availableReleasedMinors(
-                                            "{0}/{1}".format(path, release[0]),
-                                            int(release[1])))
-      cls.__cachedReleased[architecture] = available
-      
-    return available.copy()
+    # Find all the released versions greater than or equal to the RHEL
+    # minimum major and then find their minors.
+    available = {}
+    regex = r"(?i)<a\s+href=\"(released-RHEL-(\d+))/\">\1/</a>"
+    for release in filter(
+                    lambda x: int(x[1]) >= cls.__RHEL_MINIMUM_MAJOR,
+                    re.findall(regex, data)):
+      available.update(cls._availableReleasedMinors(
+                                          "{0}/{1}".format(path, release[0]),
+                                          int(release[1])))
+    return available
 
   ####################################################################
   @classmethod
@@ -89,15 +81,21 @@ class RhelRoots(RepoRoots):
   
     regex = r"(?i)<a\s+href=\"({0}\.(\d+)(|\.\d+))/\">\1/</a>".format(major)
     matches = re.findall(regex, data)
-    if major == 7:
-      matches = filter(lambda x: int(x[1]) >= 5, matches)
-    matches = list(matches)
+    if major == cls.__RHEL_MINIMUM_MAJOR:
+      matches = filter(lambda x: int(x[1]) >= cls.__RHEL_MINIMUM_MINOR,
+                       matches)
+    # Convert the minor/zStream to integers.
+    matches = [(x[0], 
+                int(x[1]), 
+                int(x[2].lstrip(".")) if x[2] != "" else 0) for x in matches]
     
     available = {}
-    for minor in range(int(min(matches)[1]), 
-                       int(max(matches)[1]) + 1):
-      minorMatches = list(filter(lambda x: int(x[1]) == minor, matches))
-      maxMatch = max(minorMatches)
+    minors = [x[1] for x in matches]
+    for minor in range(min(minors), max(minors) + 1):
+      minorMatches = list(filter(lambda x: x[1] == minor, matches))
+      maxZStream = max([x[2] for x in minorMatches])
+      maxMatch = list(filter(lambda x: x[2] == maxZStream, minorMatches))
+      maxMatch = maxMatch[0]
       available["{0}.{1}".format(major, maxMatch[1])] = (
         "http://{0}{1}/{2}".format(cls._host(), path, maxMatch[0]))
     return available
