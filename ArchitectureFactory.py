@@ -1,5 +1,5 @@
 from factory import Factory
-from . import Architecture
+from .Architecture import Architecture
 import architectures
 
 ########################################################################
