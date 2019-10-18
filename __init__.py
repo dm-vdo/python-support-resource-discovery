@@ -1,2 +1,1 @@
-from .FedoraRoots import FedoraRoots
-from .RhelRoots import RhelRoots
+from .repos import FedoraRoots, RhelRoots

@@ -4,8 +4,7 @@ from __future__ import print_function
 
 import yaml
 
-from FedoraRoots import FedoraRoots
-from RhelRoots import RhelRoots
+from repos import FedoraRoots, RhelRoots
 
 #############################################################################
 #############################################################################
