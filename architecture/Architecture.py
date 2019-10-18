@@ -1,4 +1,4 @@
-from factory import FactoryItem
+from ..factory import FactoryItem
 
 ########################################################################
 class Architecture(FactoryItem):

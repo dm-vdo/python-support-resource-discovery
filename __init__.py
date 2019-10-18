@@ -1,2 +1,1 @@
-from .Architecture import Architecture
-from .ArchitectureFactory import ArchitectureFactory
+from .architecture import Architecture, ArchitectureFactory

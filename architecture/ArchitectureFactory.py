@@ -1,4 +1,4 @@
-from factory import Factory
+from ..factory import Factory
 from .Architecture import Architecture
 import architectures
 
