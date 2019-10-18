@@ -1,6 +1,6 @@
-from ..factory import Factory
+from .factory import Factory
 from .Architecture import Architecture
-import architectures
+from .architectures import X86_64
 
 ########################################################################
 class ArchitectureFactory(Factory):
@@ -13,7 +13,7 @@ class ArchitectureFactory(Factory):
   ####################################################################
   @classmethod
   def _defaultChoice(cls):
-    return architectures.X86.X86_64
+    return X86_64
 
   ####################################################################
   @classmethod

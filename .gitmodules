@@ -1,3 +1,3 @@
-[submodule "factory"]
-	path = factory
+[submodule "architecture/factory"]
+	path = architecture/factory
 	url = ../factory.git
