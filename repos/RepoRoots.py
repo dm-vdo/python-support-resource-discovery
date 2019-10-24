@@ -15,6 +15,7 @@ class RepoRoots(object):
   # We start with None so that separate dictionaries are created per
   # subclass.
   __cachedLatest = None
+  __cachedNightly = None
   __cachedReleased = None
 
   ####################################################################
@@ -24,23 +25,38 @@ class RepoRoots(object):
   def availableRoots(cls, architecture = None):
     """Returns a dictionary with keys being the <major>.<minor> and the values
     the URI for the release repo.
-    
-    This method prioritizes released over latest versions.
+
+    This method prioritizes released over latest over nightly versions.
     """
-    available = cls._cachedLatest(architecture)
+    available = cls._cachedNightly(architecture)
+    available.update(cls._cachedLatest(architecture))
     available.update(cls._cachedReleased(architecture))
     return available
-    
+
   ####################################################################
   @classmethod
   def availableLatestRoots(cls, architecture = None):
     """Returns a dictionary with keys being the <major>.<minor> and the values
     the URI for the release repo.
-    
-    This method prioritizes latest over released versions.
+
+    This method prioritizes latest over released over nightly versions.
+    """
+    available = cls._cachedNightly(architecture)
+    available.update(cls._cachedReleased(architecture))
+    available.update(cls._cachedLatest(architecture))
+    return available
+
+  ####################################################################
+  @classmethod
+  def availableNightlyRoots(cls, architecture = None):
+    """Returns a dictionary with keys being the <major>.<minor> and the values
+    the URI for the release repo.
+
+    This method prioritizes nightly over latest over released versions.
     """
     available = cls._cachedReleased(architecture)
     available.update(cls._cachedLatest(architecture))
+    available.update(cls._cachedNightly(architecture))
     return available
 
   ####################################################################
@@ -48,6 +64,11 @@ class RepoRoots(object):
   ####################################################################
   @classmethod
   def _availableLatest(cls, architecture):
+    raise NotImplementedError
+
+  ####################################################################
+  @classmethod
+  def _availableNightly(cls, architecture):
     raise NotImplementedError
 
   ####################################################################
@@ -78,6 +99,15 @@ class RepoRoots(object):
     if architecture not in cls.__cachedLatest:
       cls.__cachedLatest[architecture] = cls._availableLatest(architecture)
     return cls.__cachedLatest[architecture].copy()
+
+  ####################################################################
+  @classmethod
+  def _cachedNightly(cls, architecture):
+    if cls.__cachedNightly is None:
+      cls.__cachedNightly = {}
+    if architecture not in cls.__cachedNightly:
+      cls.__cachedNightly[architecture] = cls._availableNightly(architecture)
+    return cls.__cachedNightly[architecture].copy()
 
   ####################################################################
   @classmethod

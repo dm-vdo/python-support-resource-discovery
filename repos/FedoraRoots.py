@@ -7,7 +7,7 @@ from .RepoRoots import RepoRoots
 class FedoraRoots(RepoRoots):
   # Exclude any release prior to 28.
   __FEDORA_MINIMUM_MAJOR = 28
-  
+
   ####################################################################
   # Overridden methods
   ####################################################################
@@ -15,13 +15,22 @@ class FedoraRoots(RepoRoots):
   def _availableLatest(cls, architecture):
     return cls._availableCommon("{0}/development".format(
                                   cls._startingPath(architecture)))
-    
+
+  ####################################################################
+  @classmethod
+  def _availableNightly(cls, architecture):
+    # For Fedora latest is nightly.
+    # We could potentially make it 'rawhide', but that would require some
+    # farther-reaching changes as the infrastructure is only set up to handle
+    # numeric versions.
+    return cls._availableLatest(architecture)
+
   ####################################################################
   @classmethod
   def _availableReleased(cls, architecture):
     return cls._availableCommon("{0}/releases".format(
                                   cls._startingPath(architecture)))
-  
+
   ####################################################################
   @classmethod
   def _host(cls):
@@ -56,7 +65,7 @@ class FedoraRoots(RepoRoots):
     if match is not None:
       host = "archives.fedoraproject.org"
       path = path.replace("/pub/", "/pub/archive/", 1)
-    return "http://{0}{1}/{2}".format(host, path, version) 
+    return "http://{0}{1}/{2}".format(host, path, version)
 
   ####################################################################
   @classmethod
