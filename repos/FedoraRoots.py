@@ -14,7 +14,8 @@ class FedoraRoots(RepoRoots):
   @classmethod
   def _availableLatest(cls, architecture):
     return cls._availableCommon("{0}/development".format(
-                                  cls._startingPath(architecture)))
+                                  cls._startingPath(architecture)),
+                                architecture)
 
   ####################################################################
   @classmethod
@@ -29,7 +30,8 @@ class FedoraRoots(RepoRoots):
   @classmethod
   def _availableReleased(cls, architecture):
     return cls._availableCommon("{0}/releases".format(
-                                  cls._startingPath(architecture)))
+                                  cls._startingPath(architecture)),
+                                architecture)
 
   ####################################################################
   @classmethod
@@ -40,7 +42,7 @@ class FedoraRoots(RepoRoots):
   # Protected methods
   ####################################################################
   @classmethod
-  def _availableCommon(cls, path):
+  def _availableCommon(cls, path, architecture):
     data = cls._path_contents("{0}/".format(path))
 
     # Find all the released versions greater than or equal to the Fedora
