@@ -6,6 +6,8 @@ else:
 
 import re
 
+from .architectures import ArchitectureFactory
+
 ######################################################################
 ######################################################################
 class RepoRoots(object):
@@ -96,6 +98,8 @@ class RepoRoots(object):
   def _cachedLatest(cls, architecture):
     if cls.__cachedLatest is None:
       cls.__cachedLatest = {}
+    if architecture is None:
+      architecture = ArchitectureFactory.defaultChoice().name()
     if architecture not in cls.__cachedLatest:
       cls.__cachedLatest[architecture] = cls._availableLatest(architecture)
     return cls.__cachedLatest[architecture].copy()
@@ -105,6 +109,8 @@ class RepoRoots(object):
   def _cachedNightly(cls, architecture):
     if cls.__cachedNightly is None:
       cls.__cachedNightly = {}
+    if architecture is None:
+      architecture = ArchitectureFactory.defaultChoice().name()
     if architecture not in cls.__cachedNightly:
       cls.__cachedNightly[architecture] = cls._availableNightly(architecture)
     return cls.__cachedNightly[architecture].copy()
@@ -114,6 +120,8 @@ class RepoRoots(object):
   def _cachedReleased(cls, architecture):
     if cls.__cachedReleased is None:
       cls.__cachedReleased = {}
+    if architecture is None:
+      architecture = ArchitectureFactory.defaultChoice().name()
     if architecture not in cls.__cachedReleased:
       cls.__cachedReleased[architecture] = cls._availableReleased(architecture)
     return cls.__cachedReleased[architecture].copy()
