@@ -1,0 +1,3 @@
+[submodule "repos/architectures"]
+	path = repos/architectures
+	url = ../architectures.git
