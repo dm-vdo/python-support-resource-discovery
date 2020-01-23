@@ -4,27 +4,30 @@ from __future__ import print_function
 
 import yaml
 
-from repos import FedoraRoots, RhelRoots
+from repos import ArchitectureFactory, FedoraRoots, RhelRoots
 
 #############################################################################
 #############################################################################
 if __name__ == "__main__":
-  print("Fedora x86_64 released roots:")
-  print(yaml.safe_dump(FedoraRoots.availableRoots("x86_64"),
-                       default_flow_style = False))
-  print("Fedora x86_64 latest roots:")
-  print(yaml.safe_dump(FedoraRoots.availableLatestRoots("x86_64"),
-                       default_flow_style = False))
-  print("Fedora x86_64 nightly roots:")
-  print(yaml.safe_dump(FedoraRoots.availableNightlyRoots("x86_64"),
-                       default_flow_style = False))
+  for architecture in ArchitectureFactory.choices():
+    print("Fedora {0} released roots:".format(architecture.name()))
+    print(yaml.safe_dump(FedoraRoots.availableRoots(architecture.name()),
+                         default_flow_style = False))
+    print("Fedora {0} latest roots:".format(architecture.name()))
+    print(yaml.safe_dump(FedoraRoots.availableLatestRoots(architecture.name()),
+                         default_flow_style = False))
+    print("Fedora {0} nightly roots:".format(architecture.name()))
+    print(yaml.safe_dump(FedoraRoots.availableNightlyRoots(
+                                                        architecture.name()),
+                         default_flow_style = False))
 
-  print("RHEL released roots:")
-  print(yaml.safe_dump(RhelRoots.availableRoots(),
-                       default_flow_style = False))
-  print("RHEL latest roots:")
-  print(yaml.safe_dump(RhelRoots.availableLatestRoots(),
-                       default_flow_style = False))
-  print("RHEL nightly roots:")
-  print(yaml.safe_dump(RhelRoots.availableNightlyRoots(),
-                       default_flow_style = False))
+  for architecture in ArchitectureFactory.choices():
+    print("RHEL {0} released roots:".format(architecture.name()))
+    print(yaml.safe_dump(RhelRoots.availableRoots(architecture.name()),
+                         default_flow_style = False))
+    print("RHEL {0} latest roots:".format(architecture.name()))
+    print(yaml.safe_dump(RhelRoots.availableLatestRoots(architecture.name()),
+                         default_flow_style = False))
+    print("RHEL {0} nightly roots:".format(architecture.name()))
+    print(yaml.safe_dump(RhelRoots.availableNightlyRoots(architecture.name()),
+                         default_flow_style = False))

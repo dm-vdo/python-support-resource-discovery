@@ -14,7 +14,7 @@ class RhelRoots(RepoRoots):
   ####################################################################
   @classmethod
   def _availableLatest(cls, architecture):
-    return cls._availableLatestMinors(cls._startingPath())
+    return cls._availableLatestMinors(cls._startingPath(), architecture)
 
   ####################################################################
   @classmethod
@@ -30,7 +30,8 @@ class RhelRoots(RepoRoots):
                     lambda x: int(x[1]) >= cls.__RHEL_MINIMUM_MAJOR,
                     re.findall(regex, data)):
       available.update(cls._availableLatestMinors(
-                    "{0}/{1}/RHEL-{2}".format(path, release[0], release[1])))
+                    "{0}/{1}/RHEL-{2}".format(path, release[0], release[1]),
+                    architecture))
     return available
 
   ####################################################################
@@ -48,7 +49,8 @@ class RhelRoots(RepoRoots):
                     re.findall(regex, data)):
       available.update(cls._availableReleasedMinors(
                       "{0}/{1}/RHEL-{2}".format(path, release[0], release[1]),
-                      int(release[1])))
+                      int(release[1]),
+                      architecture))
     return available
 
   ####################################################################
@@ -60,7 +62,7 @@ class RhelRoots(RepoRoots):
   # Protected methods
   ####################################################################
   @classmethod
-  def _availableLatestMinors(cls, path):
+  def _availableLatestMinors(cls, path, architecture):
     data = cls._path_contents("{0}/".format(path))
 
     # Find all the latest greater than or equal to the RHEL minimum major.
@@ -96,7 +98,7 @@ class RhelRoots(RepoRoots):
 
   ####################################################################
   @classmethod
-  def _availableReleasedMinors(cls, path, major):
+  def _availableReleasedMinors(cls, path, major, architecture):
     data = cls._path_contents("{0}/".format(path))
 
     regex = r"(?i)<a\s+href=\"({0}\.(\d+)(|\.\d+))/\">\1/</a>".format(major)
