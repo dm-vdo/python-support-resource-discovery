@@ -83,16 +83,21 @@ class RhelRoots(RepoRoots):
 
     available = {}
     majors = [x[1] for x in matches]
-    for major in range(min(majors), max(majors) + 1):
-      majorMatches = list(filter(lambda x: x[1] == major, matches))
-      minors = [x[2] for x in majorMatches]
-      for minor in range(min(minors), max(minors) + 1):
-        minorMatches = list(filter(lambda x: x[2] == minor, majorMatches))
-        maxZStream = max([x[3] for x in minorMatches])
-        maxMatch = list(filter(lambda x: x[3] == maxZStream, minorMatches))
-        maxMatch = maxMatch[0]
-        available["{0}.{1}".format(maxMatch[1], maxMatch[2])] = (
-          "http://{0}{1}/{2}/compose".format(cls._host(), path, maxMatch[0]))
+    if len(majors) > 0:
+      for major in range(min(majors), max(majors) + 1):
+        majorMatches = list(filter(lambda x: x[1] == major, matches))
+        minors = [x[2] for x in majorMatches]
+        if len(minors) > 0:
+          for minor in range(min(minors), max(minors) + 1):
+            minorMatches = list(filter(lambda x: x[2] == minor, majorMatches))
+            if len(minorMatches) > 0:
+              maxZStream = max([x[3] for x in minorMatches])
+              maxMatch = list(filter(lambda x: x[3] == maxZStream,
+                                     minorMatches))
+              maxMatch = maxMatch[0]
+              available["{0}.{1}".format(maxMatch[1], maxMatch[2])] = (
+                "http://{0}{1}/{2}/compose".format(cls._host(), path,
+                                                   maxMatch[0]))
 
     return available
 
@@ -113,13 +118,15 @@ class RhelRoots(RepoRoots):
 
     available = {}
     minors = [x[1] for x in matches]
-    for minor in range(min(minors), max(minors) + 1):
-      minorMatches = list(filter(lambda x: x[1] == minor, matches))
-      maxZStream = max([x[2] for x in minorMatches])
-      maxMatch = list(filter(lambda x: x[2] == maxZStream, minorMatches))
-      maxMatch = maxMatch[0]
-      available["{0}.{1}".format(major, maxMatch[1])] = (
-        "http://{0}{1}/{2}".format(cls._host(), path, maxMatch[0]))
+    if len(minors) > 0:
+      for minor in range(min(minors), max(minors) + 1):
+        minorMatches = list(filter(lambda x: x[1] == minor, matches))
+        if len(minorMatches) > 0:
+          maxZStream = max([x[2] for x in minorMatches])
+          maxMatch = list(filter(lambda x: x[2] == maxZStream, minorMatches))
+          maxMatch = maxMatch[0]
+          available["{0}.{1}".format(major, maxMatch[1])] = (
+            "http://{0}{1}/{2}".format(cls._host(), path, maxMatch[0]))
     return available
 
   ####################################################################
