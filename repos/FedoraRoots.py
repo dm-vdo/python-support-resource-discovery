@@ -49,10 +49,10 @@ class FedoraRoots(RepoRoots):
     # minimum major (limited to no less than 28, Fedora 28 being the version
     # first incorporating VDO).
     regex = r"(?i)<a\s+href=\"(\d+)/\">\1/</a>"
-    available = { x : cls._availableUri(path, x)
-                  for x in filter(
+    available = dict([  (x,  cls._availableUri(path, x))
+                        for x in filter(
                               lambda x: int(x) >= cls.__FEDORA_MINIMUM_MAJOR,
-                              re.findall(regex, data)) }
+                              re.findall(regex, data)) ])
     return available
 
   ####################################################################
