@@ -1,1 +1,1 @@
-from .repos import ArchitectureFactory, FedoraRoots, RhelRoots
+from .repos import Architecture, FedoraRoots, RhelRoots
