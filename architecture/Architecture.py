@@ -11,7 +11,7 @@ class Architecture(Factory):
   ####################################################################
   @classmethod
   def _defaultChoice(cls):
-    return filter(lambda x: x.name() == "x86_64", cls.choices())[0]
+    return list(filter(lambda x: x.name() == "x86_64", cls.choices()))[0]
 
   ####################################################################
   # Protected methods
