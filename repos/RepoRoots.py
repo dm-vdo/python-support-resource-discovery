@@ -5,6 +5,7 @@ else:
   from http import client as httplib
 
 import re
+import socket
 
 from .architectures import Architecture
 
@@ -86,10 +87,15 @@ class RepoRoots(object):
   ####################################################################
   @classmethod
   def _path_contents(cls, path):
-    connection = httplib.HTTPConnection(cls._host())
-    connection.request("GET", path)
-    response = connection.getresponse()
-    return response.read().decode("UTF-8")
+    connection = httplib.HTTPConnection(cls._host(), timeout = 10)
+    try:
+      connection.request("GET", path)
+    except socket.timeout:
+      content = ""
+    else:
+      response = connection.getresponse()
+      content = response.read().decode("UTF-8")
+    return content
 
   ####################################################################
   # Protected methods
