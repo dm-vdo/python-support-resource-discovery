@@ -90,7 +90,8 @@ class RepoRoots(object):
     connection = httplib.HTTPConnection(cls._host(), timeout = 10)
     try:
       connection.request("GET", path)
-    except socket.timeout:
+    # Tolerate both an unresolvable host and a timeout.
+    except (socket.gaierror, socket.timeout):
       content = ""
     else:
       response = connection.getresponse()
