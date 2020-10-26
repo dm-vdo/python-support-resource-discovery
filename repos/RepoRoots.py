@@ -7,7 +7,7 @@ else:
 import re
 import socket
 
-from .architectures import Architecture
+from .submodules.architectures import Architecture
 
 ######################################################################
 ######################################################################
