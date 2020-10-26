@@ -2,8 +2,7 @@
 
 from __future__ import print_function
 
-from architecture import Architecture
-from architecture.factory import FactoryShell
+from architecture import Architecture, FactoryShell
 
 #############################################################################
 #############################################################################

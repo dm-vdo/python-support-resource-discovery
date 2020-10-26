@@ -1,4 +1,4 @@
-from .factory import Factory
+from .submodules.factory import Factory
 
 ########################################################################
 class Architecture(Factory):
