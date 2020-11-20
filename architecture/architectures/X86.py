@@ -22,8 +22,14 @@ class X86(Architecture):
   ####################################################################
 
 ########################################################################
+class I386(X86):
+  """Class for X86 32-bit architectures.
+  """
+  _available = True
+
+########################################################################
 class X86_64(X86):
-  """Class for X86 64 architectures.
+  """Class for X86 64-bit architectures.
   """
   _available = True
 

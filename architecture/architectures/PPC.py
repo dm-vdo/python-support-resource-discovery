@@ -23,10 +23,12 @@ class PPC(Architecture):
 
 ########################################################################
 class PPC64(PPC):
-  """Class for PPC 64 architectures.
+  """Class for PPC 64-bit big-endian architectures.
   """
+  _available = True
+
 ########################################################################
-class PPC64LE(PPC64):
-  """Class for PPC 64 little-endian architectures.
+class PPC64LE(PPC):
+  """Class for PPC 64-bit little-endian architectures.
   """
   _available = True

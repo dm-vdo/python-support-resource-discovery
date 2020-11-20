@@ -23,6 +23,12 @@ class ARM(Architecture):
 
 ########################################################################
 class AArch64(ARM):
-  """Class for ARM 64 architectures.
+  """Class for ARM 64-bit architectures.
+  """
+  _available = True
+
+########################################################################
+class Armhfp(ARM):
+  """Class for ARM 32-bit architectures.
   """
   _available = True
