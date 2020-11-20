@@ -1,11 +1,4 @@
-import platform
-if int(platform.python_version_tuple()[0]) < 3:
-  import httplib
-else:
-  from http import client as httplib
-
-import re
-import socket
+import requests
 
 from .submodules.architectures import Architecture
 
@@ -87,16 +80,20 @@ class RepoRoots(object):
   ####################################################################
   @classmethod
   def _path_contents(cls, path):
-    connection = httplib.HTTPConnection(cls._host(), timeout = 10)
+    return cls._uri_contents("http://{0}{1}".format(cls._host(), path))
+
+  ####################################################################
+  @classmethod
+  def _uri_contents(cls, uri):
+    contents = ""
     try:
-      connection.request("GET", path)
-    # Tolerate both an unresolvable host and a timeout.
-    except (socket.gaierror, socket.timeout):
-      content = ""
-    else:
-      response = connection.getresponse()
-      content = response.read().decode("UTF-8")
-    return content
+      data = requests.get(uri)
+      if data.status_code == requests.codes["ok"]:
+        contents = data.text
+    except requests.Timeout:
+      pass
+
+    return contents
 
   ####################################################################
   # Protected methods
