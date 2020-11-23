@@ -5,6 +5,14 @@ class Architecture(Factory):
   ####################################################################
   # Public methods
   ####################################################################
+  @classmethod
+  def fedoraSecondary(cls, architecture):
+    return cls.makeItem(architecture).isFedoraSecondary
+
+  ####################################################################
+  @property
+  def isFedoraSecondary(self):
+    return False
 
   ####################################################################
   # Overridden methods
