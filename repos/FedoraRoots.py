@@ -1,5 +1,6 @@
 import re
 
+from .submodules.architectures import Architecture
 from .RepoRoots import RepoRoots
 
 ######################################################################
@@ -81,7 +82,7 @@ class FedoraRoots(RepoRoots):
   @classmethod
   def _startingPath(cls, architecture):
     path = "/pub/fedora"
-    if architecture not in ["ppc64le", "s390x"]:
+    if not Architecture.fedoraSecondary(architecture):
       path = "{0}/linux".format(path)
     else:
       path = "{0}-secondary".format(path)
