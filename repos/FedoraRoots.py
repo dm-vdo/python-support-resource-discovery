@@ -53,6 +53,14 @@ class FedoraRoots(RepoRoots):
                         for x in filter(
                               lambda x: int(x) >= cls.__FEDORA_MINIMUM_MAJOR,
                               re.findall(regex, data)) ])
+
+    # Filter out all the paths that don't have an entry for the specified
+    # architecture.
+    available = dict([ (key, value)
+                        for (key, value) in available.items()
+                          if cls._uri_contents(
+                            "{0}/Everything/{1}".format(value,
+                                                        architecture)) != "" ])
     return available
 
   ####################################################################

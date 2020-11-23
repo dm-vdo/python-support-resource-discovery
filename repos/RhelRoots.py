@@ -99,7 +99,7 @@ class RhelRoots(RepoRoots):
                 "http://{0}{1}/{2}/compose".format(cls._host(), path,
                                                    maxMatch[0]))
 
-    return available
+    return cls._filterNonExistentArchitecture(available, architecture)
 
   ####################################################################
   @classmethod
@@ -127,7 +127,21 @@ class RhelRoots(RepoRoots):
           maxMatch = maxMatch[0]
           available["{0}.{1}".format(major, maxMatch[1])] = (
             "http://{0}{1}/{2}".format(cls._host(), path, maxMatch[0]))
-    return available
+    return cls._filterNonExistentArchitecture(available, architecture)
+
+  ####################################################################
+  @classmethod
+  def _filterNonExistentArchitecture(cls, repoUris, architecture):
+    """Filters out the repo uris that don't have a subdir for the
+    specified archtecture returning only those that do.
+    """
+    return dict([ (key, value)
+                    for (key, value) in repoUris.items()
+                      if cls._uri_contents(
+                        "{0}/{1}/{2}".format(value,
+                                             "Server" if float(key) < 8
+                                                      else "BaseOS",
+                                             architecture)) != "" ])
 
   ####################################################################
   @classmethod
