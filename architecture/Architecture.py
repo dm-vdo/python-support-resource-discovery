@@ -18,15 +18,6 @@ class Architecture(Factory):
   # Overridden methods
   ####################################################################
   @classmethod
-  def item(cls, name):
-    try:
-      item = super(Architecture, cls).item(name)
-    except ValueError:
-      raise ValueError("unknown architecture name specified: {0}".format(name))
-    return item
-
-  ####################################################################
-  @classmethod
   def _defaultChoice(cls):
     return list(filter(lambda x: x.name() == "x86_64", cls.choices()))[0]
 
