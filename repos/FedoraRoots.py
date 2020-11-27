@@ -9,6 +9,10 @@ class FedoraRoots(RepoRoots):
   # Exclude any release prior to 28.
   __FEDORA_MINIMUM_MAJOR = 28
 
+  # All found roots with no distinction as to architecture.
+  # Keyed by category path.
+  __agnosticRoots = {}
+
   ####################################################################
   # Overridden methods
   ####################################################################
@@ -43,26 +47,33 @@ class FedoraRoots(RepoRoots):
   # Protected methods
   ####################################################################
   @classmethod
-  def _availableCommon(cls, path, architecture):
-    data = cls._path_contents("{0}/".format(path))
+  def _agnosticRoots(cls, path):
+    if path not in cls.__agnosticRoots:
+      data = cls._path_contents("{0}/".format(path))
 
-    # Find all the released versions greater than or equal to the Fedora
-    # minimum major (limited to no less than 28, Fedora 28 being the version
-    # first incorporating VDO).
-    regex = r"(?i)<a\s+href=\"(\d+)/\">\1/</a>"
-    available = dict([  (x,  cls._availableUri(path, x))
-                        for x in filter(
-                              lambda x: int(x) >= cls.__FEDORA_MINIMUM_MAJOR,
-                              re.findall(regex, data)) ])
+      # Find all the released versions greater than or equal to the Fedora
+      # minimum major (limited to no less than 28, Fedora 28 being the version
+      # first incorporating VDO).
+      regex = r"(?i)<a\s+href=\"(\d+)/\">\1/</a>"
+      cls.__agnosticRoots[path] = dict([
+        (x,  cls._availableUri(path, x))
+          for x in filter(lambda x: int(x) >= cls.__FEDORA_MINIMUM_MAJOR,
+                          re.findall(regex, data)) ])
+    return cls.__agnosticRoots[path]
+
+  ####################################################################
+  @classmethod
+  def _availableCommon(cls, path, architecture):
+    roots = cls._agnosticRoots(path)
 
     # Filter out all the paths that don't have an entry for the specified
     # architecture.
-    available = dict([ (key, value)
-                        for (key, value) in available.items()
-                          if cls._uri_contents(
-                            "{0}/Everything/{1}".format(value,
-                                                        architecture)) != "" ])
-    return available
+    roots = dict([ (key, value)
+                      for (key, value) in roots.items()
+                        if cls._uri_contents(
+                          "{0}/Everything/{1}".format(value,
+                                                      architecture)) != "" ])
+    return roots
 
   ####################################################################
   @classmethod

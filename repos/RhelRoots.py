@@ -9,49 +9,64 @@ class RhelRoots(RepoRoots):
   __RHEL_MINIMUM_MAJOR = 7
   __RHEL_MINIMUM_MINOR = 5
 
+  # All found roots with no distinction as to architecture.
+  # Keyed by category.
+  __agnosticRoots = {}
+
   ####################################################################
   # Overridden methods
   ####################################################################
   @classmethod
   def _availableLatest(cls, architecture):
-    return cls._availableLatestMinors(cls._startingPath(), architecture)
+    if "latest" not in cls.__agnosticRoots:
+      cls.__agnosticRoots["latest"] = cls._availableLatestMinors(
+                                                        cls._startingPath())
+
+    return cls. _filterNonExistentArchitecture(cls.__agnosticRoots["latest"],
+                                               architecture)
 
   ####################################################################
   @classmethod
   def _availableNightly(cls, architecture):
-    path = cls._startingPath()
-    data = cls._path_contents("{0}/".format(path))
+    if "nightly" not in cls.__agnosticRoots:
+      path = cls._startingPath()
+      data = cls._path_contents("{0}/".format(path))
 
-    # Find all the released versions greater than or equal to the RHEL
-    # minimum major and then find their minors.
-    available = {}
-    regex = r"(?i)<a\s+href=\"(nightly-RHEL-(\d+))/\">\1/</a>"
-    for release in filter(
-                    lambda x: int(x[1]) >= cls.__RHEL_MINIMUM_MAJOR,
-                    re.findall(regex, data)):
-      available.update(cls._availableLatestMinors(
-                    "{0}/{1}/RHEL-{2}".format(path, release[0], release[1]),
-                    architecture))
-    return available
+      # Find all the released versions greater than or equal to the RHEL
+      # minimum major and then find their minors.
+      roots = {}
+      regex = r"(?i)<a\s+href=\"(nightly-RHEL-(\d+))/\">\1/</a>"
+      for release in filter(
+                      lambda x: int(x[1]) >= cls.__RHEL_MINIMUM_MAJOR,
+                      re.findall(regex, data)):
+        roots.update(cls._availableLatestMinors(
+                      "{0}/{1}/RHEL-{2}".format(path, release[0], release[1])))
+      cls.__agnosticRoots["nightly"] = roots
+
+    return cls. _filterNonExistentArchitecture(cls.__agnosticRoots["nightly"],
+                                               architecture)
 
   ####################################################################
   @classmethod
   def _availableReleased(cls, architecture):
-    path = cls._startingPath()
-    data = cls._path_contents("{0}/".format(path))
+    if "released" not in cls.__agnosticRoots:
+      path = cls._startingPath()
+      data = cls._path_contents("{0}/".format(path))
 
-    # Find all the released versions greater than or equal to the RHEL
-    # minimum major and then find their minors.
-    available = {}
-    regex = r"(?i)<a\s+href=\"(released-RHEL-(\d+))/\">\1/</a>"
-    for release in filter(
-                    lambda x: int(x[1]) >= cls.__RHEL_MINIMUM_MAJOR,
-                    re.findall(regex, data)):
-      available.update(cls._availableReleasedMinors(
-                      "{0}/{1}/RHEL-{2}".format(path, release[0], release[1]),
-                      int(release[1]),
-                      architecture))
-    return available
+      # Find all the released versions greater than or equal to the RHEL
+      # minimum major and then find their minors.
+      roots = {}
+      regex = r"(?i)<a\s+href=\"(released-RHEL-(\d+))/\">\1/</a>"
+      for release in filter(
+                      lambda x: int(x[1]) >= cls.__RHEL_MINIMUM_MAJOR,
+                      re.findall(regex, data)):
+        roots.update(cls._availableReleasedMinors(
+                        "{0}/{1}/RHEL-{2}".format(path, release[0],
+                                                  release[1]),
+                        int(release[1])))
+      cls.__agnosticRoots["released"] = roots
+    return cls. _filterNonExistentArchitecture(cls.__agnosticRoots["released"],
+                                               architecture)
 
   ####################################################################
   @classmethod
@@ -62,7 +77,7 @@ class RhelRoots(RepoRoots):
   # Protected methods
   ####################################################################
   @classmethod
-  def _availableLatestMinors(cls, path, architecture):
+  def _availableLatestMinors(cls, path):
     data = cls._path_contents("{0}/".format(path))
 
     # Find all the latest greater than or equal to the RHEL minimum major.
@@ -99,11 +114,11 @@ class RhelRoots(RepoRoots):
                 "http://{0}{1}/{2}/compose".format(cls._host(), path,
                                                    maxMatch[0]))
 
-    return cls._filterNonExistentArchitecture(available, architecture)
+    return available
 
   ####################################################################
   @classmethod
-  def _availableReleasedMinors(cls, path, major, architecture):
+  def _availableReleasedMinors(cls, path, major):
     data = cls._path_contents("{0}/".format(path))
 
     regex = r"(?i)<a\s+href=\"({0}\.(\d+)(|\.\d+))/\">\1/</a>".format(major)
@@ -127,7 +142,7 @@ class RhelRoots(RepoRoots):
           maxMatch = maxMatch[0]
           available["{0}.{1}".format(major, maxMatch[1])] = (
             "http://{0}{1}/{2}".format(cls._host(), path, maxMatch[0]))
-    return cls._filterNonExistentArchitecture(available, architecture)
+    return available
 
   ####################################################################
   @classmethod
