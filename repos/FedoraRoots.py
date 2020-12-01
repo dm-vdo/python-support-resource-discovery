@@ -71,8 +71,10 @@ class FedoraRoots(RepoRoots):
     roots = dict([ (key, value)
                       for (key, value) in roots.items()
                         if cls._uri_contents(
-                          "{0}/Everything/{1}".format(value,
-                                                      architecture)) != "" ])
+                          "{0}/{1}/{2}".format(value,
+                                               "Server" if int(key) < 32
+                                                        else "Everything",
+                                                architecture)) != "" ])
     return roots
 
   ####################################################################
