@@ -1,6 +1,54 @@
+import errno
 import requests
+import subprocess
 
 from .submodules.architectures import Architecture
+
+######################################################################
+######################################################################
+class RepoRootsException(Exception):
+
+  ####################################################################
+  # Public methods
+  ####################################################################
+
+  ####################################################################
+  # Overridden methods
+  ####################################################################
+  def __init__(self, msg, *args, **kwargs):
+    super(RepoRootsException, self).__init__(*args, **kwargs)
+    self._msg = msg
+
+  ######################################################################
+  def __str__(self):
+    return self._msg
+
+  ####################################################################
+  # Protected methods
+  ####################################################################
+
+######################################################################
+######################################################################
+class RepoRootsBeakerNoDistroTree(RepoRootsException):
+
+  ####################################################################
+  # Overridden methods
+  ####################################################################
+  def __init__(self, distroFamily, *args, **kwargs):
+    super(RepoRootsBeakerNoDistroTree, self).__init__(
+      "beaker has no distro tree for family: {0}".format(distroFamily),
+      *args, **kwargs)
+
+######################################################################
+######################################################################
+class RepoRootsBeakerNotFound(RepoRootsException):
+
+  ####################################################################
+  # Overridden methods
+  ####################################################################
+  def __init__(self, *args, **kwargs):
+    super(RepoRootsBeakerNotFound, self).__init__("beaker command not found",
+                                                  *args, **kwargs)
 
 ######################################################################
 ######################################################################
@@ -74,6 +122,11 @@ class RepoRoots(object):
 
   ####################################################################
   @classmethod
+  def _beakerRoots(cls):
+    raise NotImplementedError
+
+  ####################################################################
+  @classmethod
   def _host(cls):
     raise NotImplementedError
 
@@ -97,6 +150,28 @@ class RepoRoots(object):
 
   ####################################################################
   # Protected methods
+  ####################################################################
+  @classmethod
+  def _beakerDistroTree(cls, distroFamily):
+    beaker = None
+    command = ["bkr", "distro-trees-list", "-family", distroFamily,
+               "--format", "json"]
+    try:
+      beaker = subprocess.Popen(command, stdout = subprocess.PIPE)
+    except OSError as ex:
+      if ex.errno != errno.ENOENT:
+        raise
+      raise RepoRootsBeakerNotFound
+
+    (stdout, _) = beaker.communicate()
+    if beaker.returncode != 0:
+      if (beaker.returncode == 1) and stdout.startswith("Nothing Matches"):
+        raise RepoRootsBeakerNoDistroTree(distroFamily)
+      raise RepoRootsException(
+              "beaker unexpected failure; return code = {0}".format(
+                                                          beaker.returncode))
+    return stdout
+
   ####################################################################
   @classmethod
   def _cachedLatest(cls, architecture):
