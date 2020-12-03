@@ -152,12 +152,16 @@ class RepoRoots(object):
   # Protected methods
   ####################################################################
   @classmethod
-  def _beakerDistroTree(cls, distroFamily):
+  def _beakerDistroTree(cls, distroFamily, name = None):
     beaker = None
-    command = ["bkr", "distro-trees-list", "-family", distroFamily,
+    command = ["bkr", "distro-trees-list", "--family", distroFamily,
                "--format", "json"]
+    if name is not None:
+      command.extend(["--name", name])
     try:
-      beaker = subprocess.Popen(command, stdout = subprocess.PIPE)
+      # Use universal_newlines to force python3 to return strings.
+      beaker = subprocess.Popen(command, stdout = subprocess.PIPE,
+                                universal_newlines = True)
     except OSError as ex:
       if ex.errno != errno.ENOENT:
         raise
@@ -165,7 +169,7 @@ class RepoRoots(object):
 
     (stdout, _) = beaker.communicate()
     if beaker.returncode != 0:
-      if (beaker.returncode == 1) and stdout.startswith("Nothing Matches"):
+      if beaker.returncode == 1:
         raise RepoRootsBeakerNoDistroTree(distroFamily)
       raise RepoRootsException(
               "beaker unexpected failure; return code = {0}".format(
