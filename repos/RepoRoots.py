@@ -1,4 +1,5 @@
 import errno
+import json
 import requests
 import subprocess
 
@@ -34,9 +35,9 @@ class RepoRootsBeakerNoDistroTree(RepoRootsException):
   ####################################################################
   # Overridden methods
   ####################################################################
-  def __init__(self, distroFamily, *args, **kwargs):
+  def __init__(self, family, *args, **kwargs):
     super(RepoRootsBeakerNoDistroTree, self).__init__(
-      "beaker has no distro tree for family: {0}".format(distroFamily),
+      "beaker has no distro tree for family: {0}".format(family),
       *args, **kwargs)
 
 ######################################################################
@@ -149,15 +150,11 @@ class RepoRoots(object):
     return contents
 
   ####################################################################
-  # Protected methods
-  ####################################################################
   @classmethod
-  def _beakerDistroTree(cls, distroFamily, name = None):
+  def _beakerRoot(cls, family, name, variant):
     beaker = None
-    command = ["bkr", "distro-trees-list", "--family", distroFamily,
-               "--format", "json"]
-    if name is not None:
-      command.extend(["--name", name])
+    command = ["bkr", "distro-trees-list", "--family", family,
+               "--name", name, "--format", "json"]
     try:
       # Use universal_newlines to force python3 to return strings.
       beaker = subprocess.Popen(command, stdout = subprocess.PIPE,
@@ -170,11 +167,50 @@ class RepoRoots(object):
     (stdout, _) = beaker.communicate()
     if beaker.returncode != 0:
       if beaker.returncode == 1:
-        raise RepoRootsBeakerNoDistroTree(distroFamily)
+        raise RepoRootsBeakerNoDistroTree(family)
       raise RepoRootsException(
               "beaker unexpected failure; return code = {0}".format(
                                                           beaker.returncode))
-    return stdout
+
+    distros = list(filter(lambda x: x["variant"] == variant,
+                          json.loads(stdout)))
+
+    # Preferentially use http links from Boston beaker controller.
+    available = []
+    for entry in distros:
+      available = list(filter(lambda x: x[0].endswith("bos.redhat.com")
+                                          and x[1].startswith("http"),
+                              entry["available"]))
+      available = [ x[1].rsplit("/{0}/{1}/os".format(variant,
+                                                     entry["arch"]), 1)[0]
+                    for x in available]
+      if len(available) > 0:
+        break
+
+    # If not Boston try RDU.
+    if len(available) == 0:
+      for entry in distros:
+        available = list(filter(lambda x: x[0].endswith("rdu.redhat.com")
+                                            and x[1].startswith("http"),
+                                entry["available"]))
+        available = [ x[1].rsplit("/{0}/{1}/os".format(variant,
+                                                       entry["arch"]), 1)[0]
+                      for x in available]
+        if len(available) > 0:
+          break
+
+    # If not Boston nor RDU take whatever we can get.
+    if len(available) == 0:
+      for entry in distros:
+        available = list(filter(lambda x: x[1].startswith("http"),
+                                entry["available"]))
+        available = [ x[1].rsplit("/{0}/{1}/os".format(variant,
+                                                       entry["arch"]), 1)[0]
+                      for x in available]
+        if len(available) > 0:
+          break
+
+    return None if len(available) == 0 else available[0]
 
   ####################################################################
   @classmethod
