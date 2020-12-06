@@ -1,7 +1,9 @@
+import json
 import re
 
 from .submodules.architectures import Architecture
-from .RepoRoots import RepoRoots, RepoRootsBeakerNotFound
+from .RepoRoots import (RepoRoots, RepoRootsBeakerNoDistroTree,
+                        RepoRootsBeakerNotFound)
 
 ######################################################################
 ######################################################################
@@ -41,7 +43,61 @@ class FedoraRoots(RepoRoots):
   ####################################################################
   @classmethod
   def _beakerRoots(cls):
-    raise RepoRootsBeakerNotFound
+    roots = {}
+    major = cls.__FEDORA_MINIMUM_MAJOR - 1
+    while True:
+      major += 1
+      try:
+        name = "Fedora-{0}".format(major)
+        distroTree = cls._beakerDistroTree(
+                      "Fedora{0}".format(major), name)
+        distros = json.loads(distroTree)
+        variant = "Server" if major < 31 else "Everything"
+        distros = list(filter(lambda x: x["variant"] == variant, distros))
+
+        # Preferentially use http links from Boston beaker controller.
+        available = []
+        for entry in distros:
+          available = list(filter(lambda x: x[0].endswith("bos.redhat.com")
+                                              and x[1].startswith("http"),
+                                  entry["available"]))
+          available = [ x[1].rstrip("/{0}/{1}/os".format(variant,
+                                                         entry["arch"]))
+                        for x in available]
+          if len(available) > 0:
+            break
+
+        # If not Boston try RDU.
+        if len(available) == 0:
+          for entry in distros:
+            available = list(filter(lambda x: x[0].endswith("rdu.redhat.com")
+                                                and x[1].startswith("http"),
+                                    entry["available"]))
+            available = [ x[1].rstrip("/{0}/{1}/os".format(variant,
+                                                           entry["arch"]))
+                          for x in available]
+            if len(available) > 0:
+              break
+
+        # If not Boston nor RDU take whatever we can get.
+        if len(available) == 0:
+          for entry in distros:
+            available = list(filter(lambda x: x[1].startswith("http"),
+                                    entry["available"]))
+            available = [ x[1].rstrip("/{0}/{1}/os".format(variant,
+                                                           entry["arch"]))
+                          for x in available]
+            if len(available) > 0:
+              break
+
+        # If we found one use it.
+        if len(available) > 0:
+          roots["{0}".format(major)] = available[0]
+
+      except RepoRootsBeakerNoDistroTree:
+        break
+
+    return roots
 
   ####################################################################
   @classmethod
