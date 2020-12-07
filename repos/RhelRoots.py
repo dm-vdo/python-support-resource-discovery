@@ -1,6 +1,7 @@
 import re
 
-from .RepoRoots import RepoRoots
+from .RepoRoots import (RepoRoots, RepoRootsBeakerNoDistroTree,
+                        RepoRootsBeakerNotFound)
 
 ######################################################################
 ######################################################################
@@ -50,23 +51,57 @@ class RhelRoots(RepoRoots):
   @classmethod
   def _availableReleased(cls, architecture):
     if "released" not in cls.__agnosticRoots:
-      path = cls._startingPath()
-      data = cls._path_contents("{0}/".format(path))
-
-      # Find all the released versions greater than or equal to the RHEL
-      # minimum major and then find their minors.
+      # Try to get the released roots from beaker.  If beaker cannot be
+      # reached get them from the web.
       roots = {}
-      regex = r"(?i)<a\s+href=\"(released-RHEL-(\d+))/\">\1/</a>"
-      for release in filter(
-                      lambda x: int(x[1]) >= cls.__RHEL_MINIMUM_MAJOR,
-                      re.findall(regex, data)):
-        roots.update(cls._availableReleasedMinors(
-                        "{0}/{1}/RHEL-{2}".format(path, release[0],
-                                                  release[1]),
-                        int(release[1])))
+      try:
+        roots = cls._beakerRoots()
+      except RepoRootsBeakerNotFound:
+        path = cls._startingPath()
+        data = cls._path_contents("{0}/".format(path))
+
+        # Find all the released versions greater than or equal to the RHEL
+        # minimum major and then find their minors.
+        regex = r"(?i)<a\s+href=\"(released-RHEL-(\d+))/\">\1/</a>"
+        for release in filter(
+                        lambda x: int(x[1]) >= cls.__RHEL_MINIMUM_MAJOR,
+                        re.findall(regex, data)):
+          roots.update(cls._availableReleasedMinors(
+                          "{0}/{1}/RHEL-{2}".format(path, release[0],
+                                                    release[1]),
+                          int(release[1])))
+
       cls.__agnosticRoots["released"] = roots
+
     return cls. _filterNonExistentArchitecture(cls.__agnosticRoots["released"],
                                                architecture)
+
+  ####################################################################
+  @classmethod
+  def _beakerRoots(cls):
+    roots = {}
+    major = cls.__RHEL_MINIMUM_MAJOR - 1
+    while True:
+      major += 1
+      minor = cls.__RHEL_MINIMUM_MINOR - 1 if major < 8 else -1
+      try:
+        while True:
+          minor += 1
+          family = "RedHatEnterpriseLinux{0}".format(major)
+          name = "RHEL-{0}.{1}{2}".format(major, minor,
+                                          "" if major < 8 else ".0")
+          variant = "Server" if major < 8 else "BaseOS"
+          root = cls._beakerRoot(family, name, variant)
+          if root is not None:
+            roots["{0}.{1}".format(major, minor)] = root
+
+      except RepoRootsBeakerNoDistroTree:
+        # If minor is zero we've exhausted the majors and are done.
+        # If it's not we only know we've exhausted the current major.
+        if minor == 0:
+          break
+
+    return roots
 
   ####################################################################
   @classmethod
