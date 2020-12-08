@@ -30,6 +30,18 @@ class PPC64(PPC):
   """
   _available = True
 
+  ####################################################################
+  # Overridden methods
+  ####################################################################
+  @property
+  def lacksHardwareData(self):
+    return True
+
+  ####################################################################
+  @property
+  def requiresExternalStorage(self):
+    return True
+
 ########################################################################
 class PPC64LE(PPC):
   """Class for PPC 64-bit little-endian architectures.

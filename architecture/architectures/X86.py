@@ -34,6 +34,16 @@ class I386(X86):
   def isFedoraSecondary(self):
     return True
 
+  ####################################################################
+  @property
+  def lacksHardwareData(self):
+    return True
+
+  ####################################################################
+  @property
+  def requiresExternalStorage(self):
+    return True
+
 ########################################################################
 class X86_64(X86):
   """Class for X86 64-bit architectures.

@@ -15,6 +15,16 @@ class Architecture(Factory):
     return False
 
   ####################################################################
+  @property
+  def lacksHardwareData(self):
+    return False
+
+  ####################################################################
+  @property
+  def requiresExternalStorage(self):
+    return False
+
+  ####################################################################
   # Overridden methods
   ####################################################################
   @classmethod

@@ -32,3 +32,16 @@ class Armhfp(ARM):
   """Class for ARM 32-bit architectures.
   """
   _available = True
+
+  ####################################################################
+  # Overridden methods
+  ####################################################################
+  @property
+  def lacksHardwareData(self):
+    return True
+
+  ####################################################################
+  @property
+  def requiresExternalStorage(self):
+    return True
+
