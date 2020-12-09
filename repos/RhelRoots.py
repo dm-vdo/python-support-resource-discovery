@@ -185,13 +185,15 @@ class RhelRoots(RepoRoots):
     """Filters out the repo uris that don't have a subdir for the
     specified archtecture returning only those that do.
     """
+    regex = re.compile(r"(?i)<a\s+href=\"({0}/)\">\1</a>".format(architecture))
+
     return dict([ (key, value)
-                    for (key, value) in repoUris.items()
-                      if cls._uri_contents(
-                        "{0}/{1}/{2}".format(value,
-                                             "Server" if float(key) < 8
-                                                      else "BaseOS",
-                                             architecture)) != "" ])
+      for (key, value) in repoUris.items()
+        if re.search(regex,
+                     cls._uri_contents(
+                      "{0}/{1}".format(value,
+                                       "Server" if float(key) < 8
+                                                else "BaseOS"))) is not None ])
 
   ####################################################################
   @classmethod
