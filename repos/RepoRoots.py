@@ -62,6 +62,7 @@ class RepoRoots(object):
   __cachedLatest = None
   __cachedNightly = None
   __cachedReleased = None
+  __cachedUriContents = {}
 
   ####################################################################
   # Public methods
@@ -140,12 +141,16 @@ class RepoRoots(object):
   @classmethod
   def _uri_contents(cls, uri):
     contents = ""
-    try:
-      data = requests.get(uri)
-      if data.status_code == requests.codes["ok"]:
-        contents = data.text
-    except requests.Timeout:
-      pass
+    if uri in cls.__cachedUriContents:
+      contents = cls.__cachedUriContents[uri]
+    else:
+      try:
+        data = requests.get(uri)
+        if data.status_code == requests.codes["ok"]:
+          cls.__cachedUriContents[uri] = data.text
+          contents = cls.__cachedUriContents[uri]
+      except requests.Timeout:
+        pass
 
     return contents
 
