@@ -43,7 +43,7 @@ class AArch64(ARM):
 class Armhfp(ARM):
   """Class for ARM 32-bit architectures.
   """
-  _available = True
+  _available = False
 
   ####################################################################
   # Overridden methods

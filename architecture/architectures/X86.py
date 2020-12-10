@@ -33,7 +33,7 @@ class X86(Architecture):
 class I386(X86):
   """Class for X86 32-bit architectures.
   """
-  _available = True
+  _available = False
 
   ####################################################################
   # Overridden methods
