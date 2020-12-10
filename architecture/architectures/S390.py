@@ -34,3 +34,16 @@ class S390X(S390):
   """Class for S390X architectures.
   """
   _available = True
+
+  ####################################################################
+  # Overridden methods
+  ####################################################################
+  @property
+  def is32Bit(self):
+    return False
+
+  ####################################################################
+  @property
+  def is64Bit(self):
+    return True
+

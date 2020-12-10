@@ -11,6 +11,16 @@ class Architecture(Factory):
 
   ####################################################################
   @property
+  def is32Bit(self):
+    return NotImplementedError
+
+  ####################################################################
+  @property
+  def is64Bit(self):
+    return NotImplementedError
+
+  ####################################################################
+  @property
   def isFedoraSecondary(self):
     return False
 

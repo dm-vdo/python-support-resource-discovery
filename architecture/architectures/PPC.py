@@ -13,6 +13,16 @@ class PPC(Architecture):
   # Overridden methods
   ####################################################################
   @property
+  def is32Bit(self):
+    return False
+
+  ####################################################################
+  @property
+  def is64Bit(self):
+    return True
+
+  ####################################################################
+  @property
   def isFedoraSecondary(self):
     return True
 

@@ -12,6 +12,14 @@ class X86(Architecture):
   ####################################################################
   # Overridden methods
   ####################################################################
+  @property
+  def is32Bit(self):
+    return True
+
+  ####################################################################
+  @property
+  def is64Bit(self):
+    return False
 
   ####################################################################
   # Protected methods
@@ -36,11 +44,6 @@ class I386(X86):
 
   ####################################################################
   @property
-  def lacksHardwareData(self):
-    return True
-
-  ####################################################################
-  @property
   def requiresExternalStorage(self):
     return True
 
@@ -49,4 +52,16 @@ class X86_64(X86):
   """Class for X86 64-bit architectures.
   """
   _available = True
+
+  ####################################################################
+  # Overridden methods
+  ####################################################################
+  @property
+  def is32Bit(self):
+    return False
+
+  ####################################################################
+  @property
+  def is64Bit(self):
+    return True
 
