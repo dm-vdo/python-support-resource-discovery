@@ -139,18 +139,23 @@ class RepoRoots(object):
 
   ####################################################################
   @classmethod
-  def _uri_contents(cls, uri):
+  def _uri_contents(cls, uri, retries = 3):
     contents = ""
     if uri in cls.__cachedUriContents:
       contents = cls.__cachedUriContents[uri]
     else:
-      try:
-        data = requests.get(uri)
-        if data.status_code == requests.codes["ok"]:
-          cls.__cachedUriContents[uri] = data.text
-          contents = cls.__cachedUriContents[uri]
-      except requests.Timeout:
-        pass
+      for iteration in range(retries):
+        try:
+          data = requests.get(uri)
+          if data.status_code == requests.codes["ok"]:
+            cls.__cachedUriContents[uri] = data.text
+            contents = cls.__cachedUriContents[uri]
+          break
+        except requests.ConnectionError:
+          if iteration >= (retries - 1):
+            raise
+        except requests.Timeout:
+          pass
 
     return contents
 
