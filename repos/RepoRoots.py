@@ -1,6 +1,17 @@
+# Although the requests python package would simplify the processing slightly
+# there is an Objective-C runtime error on macOS using it in an ansible
+# context.  Thus we use httplib and urlparse.
+import platform
+if int(platform.python_version_tuple()[0]) < 3:
+  import httplib
+  import urlparse
+else:
+  from http import client as httplib
+  from urllib import parse as urlparse
+
 import errno
 import json
-import requests
+import socket
 import subprocess
 
 from .submodules.architectures import Architecture
@@ -144,18 +155,18 @@ class RepoRoots(object):
     if uri in cls.__cachedUriContents:
       contents = cls.__cachedUriContents[uri]
     else:
+      parsed = urlparse.urlparse(uri)
+      connection = httplib.HTTPConnection(parsed.netloc, timeout = 10)
       for iteration in range(retries):
         try:
-          data = requests.get(uri)
-          if data.status_code == requests.codes["ok"]:
-            cls.__cachedUriContents[uri] = data.text
-            contents = cls.__cachedUriContents[uri]
+          connection.request("GET", parsed.path)
+          response = connection.getresponse()
+          cls.__cachedUriContents[uri] = response.read().decode("UTF-8")
+          contents = cls.__cachedUriContents[uri]
           break
-        except requests.ConnectionError:
+        except (socket.gaierror, socket.timeout):
           if iteration >= (retries - 1):
             raise
-        except requests.Timeout:
-          pass
 
     return contents
 
