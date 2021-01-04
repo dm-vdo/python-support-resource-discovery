@@ -151,24 +151,25 @@ class RepoRoots(object):
   ####################################################################
   @classmethod
   def _uri_contents(cls, uri, retries = 3):
-    contents = ""
-    if uri in cls.__cachedUriContents:
-      contents = cls.__cachedUriContents[uri]
-    else:
+    if not uri.endswith("/"):
+      uri = "{0}/".format(uri)
+    if uri not in cls.__cachedUriContents:
       parsed = urlparse.urlparse(uri)
-      connection = httplib.HTTPConnection(parsed.netloc, timeout = 10)
       for iteration in range(retries):
         try:
+          connection = httplib.HTTPConnection(parsed.netloc, timeout = 10)
           connection.request("GET", parsed.path)
           response = connection.getresponse()
-          cls.__cachedUriContents[uri] = response.read().decode("UTF-8")
-          contents = cls.__cachedUriContents[uri]
-          break
+          if response.status == 200:
+            cls.__cachedUriContents[uri] = response.read().decode("UTF-8")
+            break
         except (socket.gaierror, socket.timeout):
           if iteration >= (retries - 1):
             raise
+      else: # for
+        cls.__cachedUriContents[uri] = ""
 
-    return contents
+    return cls.__cachedUriContents[uri]
 
   ####################################################################
   @classmethod
