@@ -1,11 +1,13 @@
 # Although the requests python package would simplify the processing slightly
 # there is an Objective-C runtime error on macOS using it in an ansible
-# context.  Thus we use urllib2.
+# context.  Thus we use httplib and urlparse.
 import platform
 if int(platform.python_version_tuple()[0]) < 3:
-  import urllib2
+  import httplib
+  import urlparse
 else:
-  from urllib import request as urllib2
+  from http import client as httplib
+  from urllib import parse as urlparse
 
 import errno
 import json
@@ -149,25 +151,24 @@ class RepoRoots(object):
   ####################################################################
   @classmethod
   def _uri_contents(cls, uri, retries = 3):
-    if uri not in cls.__cachedUriContents:
+    contents = ""
+    if uri in cls.__cachedUriContents:
+      contents = cls.__cachedUriContents[uri]
+    else:
+      parsed = urlparse.urlparse(uri)
+      connection = httplib.HTTPConnection(parsed.netloc, timeout = 10)
       for iteration in range(retries):
         try:
-          connection = urllib2.urlopen(uri, timeout = 10)
-          cls.__cachedUriContents[uri] = connection.read().decode("UTF-8")
+          connection.request("GET", parsed.path)
+          response = connection.getresponse()
+          cls.__cachedUriContents[uri] = response.read().decode("UTF-8")
+          contents = cls.__cachedUriContents[uri]
           break
-        except urllib2.HTTPError as ex:
-          if ex.code != 404:
+        except (socket.gaierror, socket.timeout):
+          if iteration >= (retries - 1):
             raise
-          cls.__cachedUriContents[uri] = ""
-          break
-        except urllib2.URLError as ex:
-          if ((iteration >= (retries - 1))
-              or (not isinstance(ex.reason, socket.error))):
-            raise
-      else: # for
-        cls.__cachedUriContents[uri] = ""
 
-    return cls.__cachedUriContents[uri]
+    return contents
 
   ####################################################################
   @classmethod
