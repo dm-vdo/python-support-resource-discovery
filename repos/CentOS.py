@@ -1,11 +1,10 @@
 import re
 
-from .RepoRoots import (RepoRoots, RepoRootsBeakerNoDistroTree,
-                        RepoRootsBeakerNotFound)
+from .Repo import Repo, RepoBeakerNoDistroTree, RepoBeakerNotFound
 
 ######################################################################
 ######################################################################
-class CentOSRoots(RepoRoots):
+class CentOS(Repo):
   # Exclude any release prior to the combined minimum major and minor.
   __CENTOS_MINIMUM_MAJOR = 8
   __CENTOS_MINIMUM_MINOR = 3
@@ -35,7 +34,7 @@ class CentOSRoots(RepoRoots):
       roots = {}
       try:
         roots = cls._beakerRoots()
-      except RepoRootsBeakerNotFound:
+      except RepoBeakerNotFound:
         path = cls._startingPath()
         data = cls._path_contents("{0}/".format(path))
 
@@ -72,7 +71,7 @@ class CentOSRoots(RepoRoots):
           if root is not None:
             roots["{0}.{1}".format(major, minor)] = root
 
-      except RepoRootsBeakerNoDistroTree:
+      except RepoBeakerNoDistroTree:
         # If minor is zero we've exhausted the majors and are done.
         # If it's not we only know we've exhausted the current major.
         if minor == 0:
