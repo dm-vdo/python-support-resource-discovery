@@ -4,30 +4,31 @@ from __future__ import print_function
 
 import yaml
 
-from repos import Architecture, FedoraRoots, RhelRoots
+import repos
 
 #############################################################################
 #############################################################################
 if __name__ == "__main__":
-  for architecture in Architecture.choices():
+  for architecture in repos.Architecture.choices():
     print("Fedora {0} released roots:".format(architecture.name()))
-    print(yaml.safe_dump(FedoraRoots.availableRoots(architecture.name()),
+    print(yaml.safe_dump(repos.Fedora.availableRoots(architecture.name()),
                          default_flow_style = False))
     print("Fedora {0} latest roots:".format(architecture.name()))
-    print(yaml.safe_dump(FedoraRoots.availableLatestRoots(architecture.name()),
+    print(yaml.safe_dump(repos.Fedora.availableLatestRoots(
+                                                        architecture.name()),
                          default_flow_style = False))
     print("Fedora {0} nightly roots:".format(architecture.name()))
-    print(yaml.safe_dump(FedoraRoots.availableNightlyRoots(
+    print(yaml.safe_dump(repos.Fedora.availableNightlyRoots(
                                                         architecture.name()),
                          default_flow_style = False))
 
-  for architecture in Architecture.choices():
+  for architecture in repos.Architecture.choices():
     print("RHEL {0} released roots:".format(architecture.name()))
-    print(yaml.safe_dump(RhelRoots.availableRoots(architecture.name()),
+    print(yaml.safe_dump(repos.RHEL.availableRoots(architecture.name()),
                          default_flow_style = False))
     print("RHEL {0} latest roots:".format(architecture.name()))
-    print(yaml.safe_dump(RhelRoots.availableLatestRoots(architecture.name()),
+    print(yaml.safe_dump(repos.RHEL.availableLatestRoots(architecture.name()),
                          default_flow_style = False))
     print("RHEL {0} nightly roots:".format(architecture.name()))
-    print(yaml.safe_dump(RhelRoots.availableNightlyRoots(architecture.name()),
+    print(yaml.safe_dump(repos.RHEL.availableNightlyRoots(architecture.name()),
                          default_flow_style = False))

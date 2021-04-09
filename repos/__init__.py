@@ -1,3 +1,3 @@
 from .submodules.architectures import Architecture
-from .FedoraRoots import FedoraRoots
-from .RhelRoots import RhelRoots
+from .Fedora import Fedora
+from .RHEL import RHEL
