@@ -1,7 +1,6 @@
 import re
 
-from .Repo import (Repo, RepoBeakerNoDistroTree,
-                        RepoBeakerNotFound)
+from .Repo import Repo, RepoBeakerNoDistroTree, RepoBeakerNotFound
 
 ######################################################################
 ######################################################################

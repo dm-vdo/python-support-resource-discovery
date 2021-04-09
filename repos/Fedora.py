@@ -2,8 +2,7 @@ import json
 import re
 
 from .submodules.architectures import Architecture
-from .Repo import (Repo, RepoBeakerNoDistroTree,
-                        RepoBeakerNotFound)
+from .Repo import Repo, RepoBeakerNoDistroTree, RepoBeakerNotFound
 
 ######################################################################
 ######################################################################
