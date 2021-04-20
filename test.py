@@ -10,6 +10,19 @@ import repos
 #############################################################################
 if __name__ == "__main__":
   for architecture in repos.Architecture.choices():
+    print("CentOS {0} released roots:".format(architecture.name()))
+    print(yaml.safe_dump(repos.CentOS.availableRoots(architecture.name()),
+                         default_flow_style = False))
+    print("CentOS {0} latest roots:".format(architecture.name()))
+    print(yaml.safe_dump(repos.CentOS.availableLatestRoots(
+                                                          architecture.name()),
+                         default_flow_style = False))
+    print("CentOS {0} nightly roots:".format(architecture.name()))
+    print(yaml.safe_dump(repos.CentOS.availableNightlyRoots(
+                                                        architecture.name()),
+                         default_flow_style = False))
+
+  for architecture in repos.Architecture.choices():
     print("Fedora {0} released roots:".format(architecture.name()))
     print(yaml.safe_dump(repos.Fedora.availableRoots(architecture.name()),
                          default_flow_style = False))
