@@ -1,1 +1,1 @@
-import architectures
+from . import architectures
