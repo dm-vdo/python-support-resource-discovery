@@ -82,7 +82,8 @@ class RHEL(Repo):
     major = cls.__RHEL_MINIMUM_MAJOR - 1
     while True:
       major += 1
-      minor = cls.__RHEL_MINIMUM_MINOR - 1 if major < 8 else -1
+      minor = (-1 if major > cls.__RHEL_MINIMUM_MAJOR
+                  else cls.__RHEL_MINIMUM_MINOR - 1)
       try:
         while True:
           minor += 1

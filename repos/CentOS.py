@@ -60,7 +60,8 @@ class CentOS(Repo):
     major = cls.__CENTOS_MINIMUM_MAJOR - 1
     while True:
       major += 1
-      minor = cls.__CENTOS_MINIMUM_MINOR - 1
+      minor = (-1 if major > cls.__CENTOS_MINIMUM_MAJOR
+                  else cls.__CENTOS_MINIMUM_MINOR - 1)
       try:
         while True:
           minor += 1
