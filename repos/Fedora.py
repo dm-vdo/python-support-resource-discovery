@@ -2,11 +2,12 @@ import json
 import re
 
 from .submodules.architectures import Architecture
-from .Repo import Repo, RepoBeakerNoDistroTree, RepoBeakerNotFound
+from .Repository import (Repository, RepositoryBeakerNoDistroTree,
+                         RepositoryBeakerNotFound)
 
 ######################################################################
 ######################################################################
-class Fedora(Repo):
+class Fedora(Repository):
   # Exclude any release prior to 28.
   __FEDORA_MINIMUM_MAJOR = 28
 
@@ -54,7 +55,7 @@ class Fedora(Repo):
         if root is not None:
           roots["{0}".format(major)] = root
 
-      except RepoBeakerNoDistroTree:
+      except RepositoryBeakerNoDistroTree:
         break
 
     return roots
@@ -76,7 +77,7 @@ class Fedora(Repo):
       if path.endswith("/releases"):
         try:
           roots = cls._beakerRoots()
-        except RepoBeakerNotFound:
+        except RepositoryBeakerNotFound:
           pass
 
       if roots is None:

@@ -1,3 +1,6 @@
 [submodule "repos/submodules/architectures"]
 	path = repos/submodules/architectures
 	url = https://gitlab.cee.redhat.com/jshimkus-bits/python-infrastructure/architectures.git
+[submodule "repos/submodules/command"]
+	path = repos/submodules/command
+	url = https://gitlab.cee.redhat.com/jshimkus-bits/python-infrastructure/command.git

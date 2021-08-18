@@ -1,10 +1,11 @@
 import re
 
-from .Repo import Repo, RepoBeakerNoDistroTree, RepoBeakerNotFound
+from .Repository import (Repository, RepositoryBeakerNoDistroTree,
+                         RepositoryBeakerNotFound)
 
 ######################################################################
 ######################################################################
-class RHEL(Repo):
+class RHEL(Repository):
   # Exclude any release prior to the combined minimum major and minor.
   __RHEL_MINIMUM_MAJOR = 7
   __RHEL_MINIMUM_MINOR = 5
@@ -55,7 +56,7 @@ class RHEL(Repo):
       roots = {}
       try:
         roots = cls._beakerRoots()
-      except RepoBeakerNotFound:
+      except RepositoryBeakerNotFound:
         path = cls._startingPath()
         data = cls._path_contents("{0}/".format(path))
 
@@ -95,7 +96,7 @@ class RHEL(Repo):
           if root is not None:
             roots["{0}.{1}".format(major, minor)] = root
 
-      except RepoBeakerNoDistroTree:
+      except RepositoryBeakerNoDistroTree:
         # If minor is zero we've exhausted the majors and are done.
         # If it's not we only know we've exhausted the current major.
         if minor == 0:

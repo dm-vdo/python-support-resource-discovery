@@ -18,7 +18,7 @@ from .submodules.architectures import Architecture
 
 ######################################################################
 ######################################################################
-class RepoException(Exception):
+class RepositoryException(Exception):
 
   ####################################################################
   # Public methods
@@ -28,7 +28,7 @@ class RepoException(Exception):
   # Overridden methods
   ####################################################################
   def __init__(self, msg, *args, **kwargs):
-    super(RepoException, self).__init__(*args, **kwargs)
+    super(RepositoryException, self).__init__(*args, **kwargs)
     self._msg = msg
 
   ######################################################################
@@ -41,30 +41,30 @@ class RepoException(Exception):
 
 ######################################################################
 ######################################################################
-class RepoBeakerNoDistroTree(RepoException):
+class RepositoryBeakerNoDistroTree(RepositoryException):
 
   ####################################################################
   # Overridden methods
   ####################################################################
   def __init__(self, family, *args, **kwargs):
-    super(RepoBeakerNoDistroTree, self).__init__(
+    super(RepositoryBeakerNoDistroTree, self).__init__(
       "beaker has no distro tree for family: {0}".format(family),
       *args, **kwargs)
 
 ######################################################################
 ######################################################################
-class RepoBeakerNotFound(RepoException):
+class RepositoryBeakerNotFound(RepositoryException):
 
   ####################################################################
   # Overridden methods
   ####################################################################
   def __init__(self, *args, **kwargs):
-    super(RepoBeakerNotFound, self).__init__("beaker command not found",
+    super(RepositoryBeakerNotFound, self).__init__("beaker command not found",
                                                   *args, **kwargs)
 
 ######################################################################
 ######################################################################
-class Repo(object):
+class Repository(object):
   # We cache the results of determining the various roots to avoid
   # having to constantly perform network queries.
   #
@@ -184,13 +184,13 @@ class Repo(object):
     except OSError as ex:
       if ex.errno != errno.ENOENT:
         raise
-      raise RepoBeakerNotFound
+      raise RepositoryBeakerNotFound
 
     (stdout, _) = beaker.communicate()
     if beaker.returncode != 0:
       if beaker.returncode == 1:
-        raise RepoBeakerNoDistroTree(family)
-      raise RepoException(
+        raise RepositoryBeakerNoDistroTree(family)
+      raise RepositoryException(
               "beaker unexpected failure; return code = {0}".format(
                                                           beaker.returncode))
 
