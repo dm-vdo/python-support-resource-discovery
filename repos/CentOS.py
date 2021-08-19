@@ -36,7 +36,7 @@ class CentOS(Repository):
       try:
         roots = cls._beakerRoots()
       except RepositoryBeakerNotFound:
-        path = cls._startingPath()
+        path = cls._releasedStartingPath()
         data = cls._path_contents("{0}/".format(path))
 
         # Find all the released versions greater than or equal to the CentOS
@@ -87,6 +87,11 @@ class CentOS(Repository):
     return "download.eng.bos.redhat.com"
 
   ####################################################################
+  @classmethod
+  def _releasedStartingPath(cls, architecture = None):
+    return "/released/CentOS"
+
+  ####################################################################
   # Protected methods
   ####################################################################
   @classmethod
@@ -129,9 +134,4 @@ class CentOS(Repository):
         if re.search(regex,
                      cls._uri_contents(
                       "{0}/{1}".format(value, "BaseOS"))) is not None ])
-
-  ####################################################################
-  @classmethod
-  def _startingPath(cls):
-    return "/released/CentOS"
 

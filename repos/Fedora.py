@@ -21,7 +21,7 @@ class Fedora(Repository):
   @classmethod
   def _availableLatest(cls, architecture):
     return cls._availableCommon("{0}/development".format(
-                                  cls._startingPath(architecture)),
+                                  cls._latestStartingPath(architecture)),
                                 architecture)
 
   ####################################################################
@@ -37,7 +37,7 @@ class Fedora(Repository):
   @classmethod
   def _availableReleased(cls, architecture):
     return cls._availableCommon("{0}/releases".format(
-                                  cls._startingPath(architecture)),
+                                  cls._releasedStartingPath(architecture)),
                                 architecture)
 
   ####################################################################
@@ -64,6 +64,16 @@ class Fedora(Repository):
   @classmethod
   def _host(cls):
     return "dl.fedoraproject.org"
+
+  ####################################################################
+  @classmethod
+  def _releasedStartingPath(cls, architecture):
+    path = "/pub/fedora"
+    if not Architecture.fedoraSecondary(architecture):
+      path = "{0}/linux".format(path)
+    else:
+      path = "{0}-secondary".format(path)
+    return path
 
   ####################################################################
   # Protected methods
@@ -124,12 +134,3 @@ class Fedora(Repository):
       path = path.replace("/pub/", "/pub/archive/", 1)
     return "http://{0}{1}/{2}".format(host, path, version)
 
-  ####################################################################
-  @classmethod
-  def _startingPath(cls, architecture):
-    path = "/pub/fedora"
-    if not Architecture.fedoraSecondary(architecture):
-      path = "{0}/linux".format(path)
-    else:
-      path = "{0}-secondary".format(path)
-    return path
