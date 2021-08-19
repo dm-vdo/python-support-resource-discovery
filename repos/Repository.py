@@ -135,44 +135,6 @@ class Repository(object):
 
   ####################################################################
   @classmethod
-  def _beakerRoots(cls):
-    raise NotImplementedError
-
-  ####################################################################
-  @classmethod
-  def _host(cls):
-    raise NotImplementedError
-
-  ####################################################################
-  @classmethod
-  def _path_contents(cls, path):
-    return cls._uri_contents("http://{0}{1}".format(cls._host(), path))
-
-  ####################################################################
-  @classmethod
-  def _uri_contents(cls, uri, retries = 3):
-    if not uri.endswith("/"):
-      uri = "{0}/".format(uri)
-    if uri not in cls.__cachedUriContents:
-      parsed = urlparse.urlparse(uri)
-      for iteration in range(retries):
-        try:
-          connection = httplib.HTTPConnection(parsed.netloc, timeout = 10)
-          connection.request("GET", parsed.path)
-          response = connection.getresponse()
-          if response.status == 200:
-            cls.__cachedUriContents[uri] = response.read().decode("UTF-8")
-            break
-        except (socket.gaierror, socket.timeout):
-          if iteration >= (retries - 1):
-            raise
-      else: # for
-        cls.__cachedUriContents[uri] = ""
-
-    return cls.__cachedUriContents[uri]
-
-  ####################################################################
-  @classmethod
   def _beakerRoot(cls, family, name, variant):
     beaker = None
     command = ["bkr", "distro-trees-list", "--family", family,
@@ -236,6 +198,11 @@ class Repository(object):
 
   ####################################################################
   @classmethod
+  def _beakerRoots(cls):
+    raise NotImplementedError
+
+  ####################################################################
+  @classmethod
   def _cachedLatest(cls, architecture):
     if cls.__cachedLatest is None:
       cls.__cachedLatest = {}
@@ -266,3 +233,53 @@ class Repository(object):
     if architecture not in cls.__cachedReleased:
       cls.__cachedReleased[architecture] = cls._availableReleased(architecture)
     return cls.__cachedReleased[architecture].copy()
+
+  ####################################################################
+  @classmethod
+  def _host(cls):
+    raise NotImplementedError
+
+  ####################################################################
+  @classmethod
+  def _latestStartingPath(cls, architecture = None):
+    return cls._releasedStartingPath(architecture)
+
+  ####################################################################
+  @classmethod
+  def _nightlyStartingPath(cls, architecture = None):
+    return cls._releasedStartingPath(architecture)
+
+  ####################################################################
+  @classmethod
+  def _releasedStartingPath(cls, architecture = None):
+    raise NotImplementedError
+
+  ####################################################################
+  @classmethod
+  def _path_contents(cls, path = None):
+    if path is None:
+      path = cls._releasedStartingPath()
+    return cls._uri_contents("http://{0}{1}".format(cls._host(), path))
+
+  ####################################################################
+  @classmethod
+  def _uri_contents(cls, uri, retries = 3):
+    if not uri.endswith("/"):
+      uri = "{0}/".format(uri)
+    if uri not in cls.__cachedUriContents:
+      parsed = urlparse.urlparse(uri)
+      for iteration in range(retries):
+        try:
+          connection = httplib.HTTPConnection(parsed.netloc, timeout = 10)
+          connection.request("GET", parsed.path)
+          response = connection.getresponse()
+          if response.status == 200:
+            cls.__cachedUriContents[uri] = response.read().decode("UTF-8")
+            break
+        except (socket.gaierror, socket.timeout):
+          if iteration >= (retries - 1):
+            raise
+      else: # for
+        cls.__cachedUriContents[uri] = ""
+
+    return cls.__cachedUriContents[uri]
