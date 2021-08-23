@@ -1,7 +1,7 @@
 import json
 import re
 
-from .submodules.architectures import Architecture
+import architectures
 from .Repository import (Repository, RepositoryBeakerNoDistroTree,
                          RepositoryBeakerNotFound)
 
@@ -69,7 +69,7 @@ class Fedora(Repository):
   @classmethod
   def _releasedStartingPath(cls, architecture):
     path = "/pub/fedora"
-    if not Architecture.fedoraSecondary(architecture):
+    if not architectures.Architecture.fedoraSecondary(architecture):
       path = "{0}/linux".format(path)
     else:
       path = "{0}-secondary".format(path)

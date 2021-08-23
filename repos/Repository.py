@@ -14,7 +14,7 @@ import json
 import socket
 import subprocess
 
-from .submodules.architectures import Architecture
+import architectures
 
 ######################################################################
 ######################################################################
@@ -207,7 +207,7 @@ class Repository(object):
     if cls.__cachedLatest is None:
       cls.__cachedLatest = {}
     if architecture is None:
-      architecture = Architecture.defaultChoice().name()
+      architecture = architectures.Architecture.defaultChoice().name()
     if architecture not in cls.__cachedLatest:
       cls.__cachedLatest[architecture] = cls._availableLatest(architecture)
     return cls.__cachedLatest[architecture].copy()
@@ -218,7 +218,7 @@ class Repository(object):
     if cls.__cachedNightly is None:
       cls.__cachedNightly = {}
     if architecture is None:
-      architecture = Architecture.defaultChoice().name()
+      architecture = architectures.Architecture.defaultChoice().name()
     if architecture not in cls.__cachedNightly:
       cls.__cachedNightly[architecture] = cls._availableNightly(architecture)
     return cls.__cachedNightly[architecture].copy()
@@ -229,7 +229,7 @@ class Repository(object):
     if cls.__cachedReleased is None:
       cls.__cachedReleased = {}
     if architecture is None:
-      architecture = Architecture.defaultChoice().name()
+      architecture = architectures.Architecture.defaultChoice().name()
     if architecture not in cls.__cachedReleased:
       cls.__cachedReleased[architecture] = cls._availableReleased(architecture)
     return cls.__cachedReleased[architecture].copy()

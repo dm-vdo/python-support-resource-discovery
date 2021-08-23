@@ -1,1 +1,1 @@
-from .repos import Architecture, CentOS, Fedora, RHEL
+from .repos import CentOS, Fedora, RHEL
