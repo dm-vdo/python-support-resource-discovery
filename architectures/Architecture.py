@@ -1,10 +1,10 @@
 import os
 
-from .submodules.defaults import Defaults
-from .submodules.factory import Factory
+import defaults
+import factory
 
 ########################################################################
-class Architecture(Factory):
+class Architecture(factory.Factory):
   __defaults = None
 
   ####################################################################
@@ -54,10 +54,10 @@ class Architecture(Factory):
   @classmethod
   def _defaults(cls):
     if cls.__defaults is None:
-      cls.__defaults = Defaults(os.path.join(
+      cls.__defaults = defaults.Defaults(os.path.join(
                                   os.path.dirname(
                                     os.path.realpath(__file__)),
-                                  "..", "defaults.yml"))
+                                  "defaults.yml"))
     return cls.__defaults
 
   ####################################################################

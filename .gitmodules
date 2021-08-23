@@ -1,6 +1,1 @@
-[submodule "architecture/submodules/factory"]
-	path = architecture/submodules/factory
-	url = https://gitlab.cee.redhat.com/jshimkus-bits/python-infrastructure/factory.git
-[submodule "architecture/submodules/defaults"]
-	path = architecture/submodules/defaults
-	url = https://gitlab.cee.redhat.com/jshimkus-bits/python-infrastructure/defaults.git
+
