@@ -1,17 +1,22 @@
 #!/usr/bin/env python
 
+import platform
 import setuptools
 
 setuptools.setup(
-  name = "architectures",
+  name = "python{0}-infrastructure-architectures".format(python_version),
   version = "1.0.0",
-  description = "architectures",
+  description = "python{0}-infrastructure-architectures".format(
+                                                              python_version),
   author = "Joe Shimkus",
   author_email = "jshimkus@redhat.com",
-  packages = setuptools.find_packages(exclude = []),
+  package_dir = {"" : "architectures"},
+  packages = setuptools.find_packages(where = "architectures",
+                                      exclude = []),
   package_data = { "architectures" : ["defaults.yml"] },
-  install_requires = ["defaults", "factory"],
-  dependency_links = [
-                      "http://vdo-image-store.permabit.lab.eng.bos.redhat.com/repository/jshimkus/"
-                     ]
+  # setuptools doesn't actually put the content of "requires" in the generated
+  # rpm spec file though it claims that it should.
+  # We'll just make certain to always install the requirements manually, for
+  # which this serves as a reminder of what to install.
+  requires = ["defaults", "factory"]
 )
