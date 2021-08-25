@@ -11,9 +11,7 @@ setuptools.setup(
   description = "python{0}-repos".format(python_version),
   author = "Joe Shimkus",
   author_email = "jshimkus@redhat.com",
-  package_dir = {"" : "repos"},
-  packages = setuptools.find_packages(where = "repos",
-                                      exclude = []),
+  packages = setuptools.find_packages(exclude = []),
   # setuptools doesn't actually put the content of "requires" in the generated
   # rpm spec file though it claims that it should.
   # We'll just make certain to always install the requirements manually, for
