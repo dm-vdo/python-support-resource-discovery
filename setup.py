@@ -4,10 +4,9 @@ import platform
 import setuptools
 
 setuptools.setup(
-  name = "python{0}-infrastructure-architectures".format(python_version),
+  name = "python{0}-architectures".format(python_version),
   version = "1.0.0",
-  description = "python{0}-infrastructure-architectures".format(
-                                                              python_version),
+  description = "python{0}-architectures".format(python_version),
   author = "Joe Shimkus",
   author_email = "jshimkus@redhat.com",
   package_dir = {"" : "architectures"},
