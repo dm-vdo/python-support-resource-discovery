@@ -6,9 +6,9 @@ import setuptools
 python_version = platform.python_version_tuple()[0]
 
 setuptools.setup(
-  name = "python{0}-infrastructure-repos".format(python_version),
+  name = "python{0}-repos".format(python_version),
   version = "1.0.0",
-  description = "python{0}-infrastructure-repos".format(python_version),
+  description = "python{0}-repos".format(python_version),
   author = "Joe Shimkus",
   author_email = "jshimkus@redhat.com",
   package_dir = {"" : "repos"},
