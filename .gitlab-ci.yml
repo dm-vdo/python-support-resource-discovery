@@ -1,8 +1,6 @@
 stages:
     - build
 
-image: docker:stable
-
 build-repos:
     stage: build
 
@@ -10,20 +8,19 @@ build-repos:
         REPO_DIR_NAME: "python-repos"
 
     script:
-        - apk add rpm
-        - apk add wget
-        - apk add python2
         - wget -O get-pip2.py https://bootstrap.pypa.io/pip/2.7/get-pip.py
         - python2 get-pip2.py
         - python2 setup.py bdist_rpm --requires "python2-architectures,python2-command"
-        - apk add python3
         - wget -O get-pip3.py https://bootstrap.pypa.io/get-pip.py
         - python3 get-pip3.py
         - python3 setup.py bdist_rpm --requires "python3-architectures,python3-command"
         - mkdir $REPO_DIR_NAME
         - cp dist/*.rpm $REPO_DIR_NAME
+        - createrepo $REPO_DIR_NAME
+        - chmod og= $ID_RSA
+        - scp -i $ID_RSA -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -r $REPO_DIR_NAME $SERVER_USER@$SERVER_IP$SERVER_ROOT_PATH
     tags:
-        - docker
+        - pbitcolo
     artifacts:
         paths:
             - $REPO_DIR_NAME/*
