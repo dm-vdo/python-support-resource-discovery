@@ -10,10 +10,12 @@ build-architectures:
     script:
         - wget -O get-pip2.py https://bootstrap.pypa.io/pip/2.7/get-pip.py
         - python2 get-pip2.py
-        - python2 setup.py bdist_rpm --requires "python2-defaults,python2-factory"
+        - python2 setup.py bdist_rpm --fix-python
+            --requires "python2-defaults,python2-factory"
         - wget -O get-pip3.py https://bootstrap.pypa.io/get-pip.py
         - python3 get-pip3.py
-        - python3 setup.py bdist_rpm --requires "python3-defaults,python3-factory"
+        - python3 setup.py bdist_rpm --fix-python
+            --requires "python3-defaults,python3-factory"
         - mkdir $REPO_DIR_NAME
         - cp dist/*.rpm $REPO_DIR_NAME
         - createrepo $REPO_DIR_NAME
