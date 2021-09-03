@@ -22,7 +22,7 @@ build-repos:
         - chmod og= $ID_RSA
         - scp -i $ID_RSA -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -r $REPO_DIR_NAME $SERVER_USER@$SERVER_IP$SERVER_ROOT_PATH
     tags:
-        - pbitcolo
+        - pbitlab
     artifacts:
         paths:
             - $REPO_DIR_NAME/*
