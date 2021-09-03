@@ -6,6 +6,7 @@ build-repos:
 
     variables:
         REPO_DIR_NAME: "python-repos"
+        REPO_SERVER_ROOT: $SERVER_ROOT_PATH$SERVER_SUB_PATH
 
     script:
         - wget -O get-pip2.py https://bootstrap.pypa.io/pip/2.7/get-pip.py
@@ -20,7 +21,9 @@ build-repos:
         - cp dist/*.rpm $REPO_DIR_NAME
         - createrepo $REPO_DIR_NAME
         - chmod og= $ID_RSA
-        - scp -i $ID_RSA -o "StrictHostKeyChecking=no" -o "UserKnownHostsFile=/dev/null" -r $REPO_DIR_NAME $SERVER_USER@$SERVER_IP$SERVER_ROOT_PATH
+        - scp -i $ID_RSA -o "StrictHostKeyChecking=no"
+            -o "UserKnownHostsFile=/dev/null" -r $REPO_DIR_NAME
+            $SERVER_USER@$SERVER_IP$REPO_SERVER_ROOT
     tags:
         - pbitlab
     artifacts:
