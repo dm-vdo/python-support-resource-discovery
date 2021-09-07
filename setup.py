@@ -2,19 +2,20 @@
 
 import platform
 import setuptools
+import sys
 
-python_version = platform.python_version_tuple()[0]
+def prefixed(src):
+  python_version = platform.python_version_tuple()[0]
+  if ("bdist_wheel" in sys.argv) and ("--universal" in sys.argv):
+    python_version = ""
+  return "python{0}-{1}".format(python_version, src)
 
 setuptools.setup(
-  name = "python{0}-repos".format(python_version),
+  name = prefixed("repos"),
   version = "1.0.0",
-  description = "python{0}-repos".format(python_version),
+  description = prefixed("repos"),
   author = "Joe Shimkus",
   author_email = "jshimkus@redhat.com",
   packages = setuptools.find_packages(exclude = []),
-  # setuptools doesn't actually put the content of "requires" in the generated
-  # rpm spec file though it claims that it should.
-  # We'll just make certain to always install the requirements manually, for
-  # which this serves as a reminder of what to install.
-  requires = ["architectures", "command"]
+  install_requires = [prefixed("architectures"), prefixed("command")]
 )
