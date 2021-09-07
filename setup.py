@@ -2,20 +2,21 @@
 
 import platform
 import setuptools
+import sys
 
-python_version = platform.python_version_tuple()[0]
+def prefixed(src):
+  python_version = platform.python_version_tuple()[0]
+  if ("bdist_wheel" in sys.argv) and ("--universal" in sys.argv):
+    python_version = ""
+  return "python{0}-{1}".format(python_version, src)
 
 setuptools.setup(
-  name = "python{0}-architectures".format(python_version),
+  name = prefixed("architectures"),
   version = "1.0.0",
-  description = "python{0}-architectures".format(python_version),
+  description = prefixed("architectures"),
   author = "Joe Shimkus",
   author_email = "jshimkus@redhat.com",
   packages = setuptools.find_packages(exclude = []),
   package_data = { "architectures" : ["defaults.yml"] },
-  # setuptools doesn't actually put the content of "requires" in the generated
-  # rpm spec file though it claims that it should.
-  # We'll just make certain to always install the requirements manually, for
-  # which this serves as a reminder of what to install.
-  requires = ["defaults", "factory"]
+  install_requires = [prefixed("defaults"), prefixed ("factory")]
 )
