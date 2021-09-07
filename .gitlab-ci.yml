@@ -7,8 +7,7 @@ build-repos:
     variables:
         REPO_DIR_NAME: "python-repos"
         REPO_SERVER_ROOT: $SERVER_ROOT_PATH$SERVER_SUB_PATH
-        REPO_SERVER_PIP_ROOT: $SERVER_PIP_ROOT_PATH$SERVER_PIP_SUB_PATH
-        REPO_SERVER_PIP_DEST: $REPO_SERVER_PIP_ROOT/$REPO_DIR_NAME/
+        REPO_SERVER_PIP_ROOT: $SERVER_PIP_ROOT_PATH/$REPO_DIR_NAME
 
     script:
         # Get python2 pip.
@@ -18,9 +17,9 @@ build-repos:
         - python2 setup.py bdist_wheel --universal
         # Copy the wheel to the server.
         - chmod og= $ID_RSA
-        - scp -i $ID_RSA -o "StrictHostKeyChecking=no"
-            -o "UserKnownHostsFile=/dev/null" dist/*.whl
-            $SERVER_USER@$SERVER_IP$REPO_SERVER_PIP_DEST
+        - (cd dist && scp -i $ID_RSA -o "StrictHostKeyChecking=no"
+            -o "UserKnownHostsFile=/dev/null" *.whl
+            $SERVER_USER@$SERVER_IP$REPO_SERVER_PIP_ROOT)
         # Build python2 rpm.
         - python2 setup.py bdist_rpm --fix-python
             --requires "python2-architectures,python2-command"
