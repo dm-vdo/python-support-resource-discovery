@@ -6,40 +6,18 @@ build-architectures:
 
     variables:
         REPO_DIR_NAME: "python-architectures"
-        REPO_SERVER_ROOT: $SERVER_ROOT_PATH$SERVER_SUB_PATH
-        REPO_SERVER_PIP_ROOT: $SERVER_PIP_ROOT_PATH/$REPO_DIR_NAME
+        REPO_SERVER_PIP_ROOT: $SERVER_PIP_ROOT_PATH$SERVER_PIP_SUB_PATH
 
     script:
-        # Get python2 pip.
-        - wget -O get-pip2.py https://bootstrap.pypa.io/pip/2.7/get-pip.py
-        - python2 get-pip2.py
+        # Get pip.
+        - wget -O get-pip.py https://bootstrap.pypa.io/get-pip.py
+        - python3 get-pip.py
         # Build universal python wheel.
-        - python2 setup.py bdist_wheel --universal
+        - python3 setup.py bdist_wheel --universal
         # Copy the wheel to the server.
         - chmod og= $ID_RSA
         - (cd dist && scp -i $ID_RSA -o "StrictHostKeyChecking=no"
             -o "UserKnownHostsFile=/dev/null" *.whl
-            $SERVER_USER@$SERVER_IP$REPO_SERVER_PIP_ROOT)
-        # Build python2 rpm.
-        - python2 setup.py bdist_rpm --fix-python
-            --requires "python2-defaults,python2-factory"
-        # Get python3 pip.
-        - wget -O get-pip3.py https://bootstrap.pypa.io/get-pip.py
-        - python3 get-pip3.py
-        # Build python3 rpm.
-        - python3 setup.py bdist_rpm --fix-python
-            --requires "python3-defaults,python3-factory"
-        # Create repo dir, populate it and make the repo.
-        - mkdir $REPO_DIR_NAME
-        - cp dist/*.rpm $REPO_DIR_NAME
-        - createrepo $REPO_DIR_NAME
-        # Copy the repo to the server.
-        - chmod og= $ID_RSA
-        - scp -i $ID_RSA -o "StrictHostKeyChecking=no"
-            -o "UserKnownHostsFile=/dev/null" -r $REPO_DIR_NAME
-            $SERVER_USER@$SERVER_IP$REPO_SERVER_ROOT
+            $SERVER_USER@$SERVER_IP$REPO_SERVER_PIP_ROOT/$REPO_DIR_NAME)
     tags:
         - pbitlab
-    artifacts:
-        paths:
-            - $REPO_DIR_NAME/*
