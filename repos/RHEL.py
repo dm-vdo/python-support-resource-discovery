@@ -10,71 +10,8 @@ class RHEL(Repository):
   __RHEL_MINIMUM_MAJOR = 7
   __RHEL_MINIMUM_MINOR = 5
 
-  # All found roots with no distinction as to architecture.
-  # Keyed by category.
-  __agnosticRoots = {}
-
   ####################################################################
   # Overridden methods
-  ####################################################################
-  @classmethod
-  def _availableLatest(cls, architecture):
-    if "latest" not in cls.__agnosticRoots:
-      # Find all the released versions greater than or equal to the RHEL
-      # minimum major and then find their minors.
-      roots = {}
-      path = cls._latestStartingPath()
-
-      for rhel in cls._findMajorRhels(path,
-                                      r"<a\s+href=\"(rhel-(\d+))/\">\1/</a>"):
-        roots.update(cls._availableLatestMinors(
-                "{0}/{1}/rel-eng/{2}".format(path, rhel[0], rhel[0].upper())))
-      cls.__agnosticRoots["latest"] = roots
-
-    return cls. _filterNonExistentArchitecture(cls.__agnosticRoots["latest"],
-                                               architecture)
-
-  ####################################################################
-  @classmethod
-  def _availableNightly(cls, architecture):
-    if "nightly" not in cls.__agnosticRoots:
-      # Find all the released versions greater than or equal to the RHEL
-      # minimum major and then find their minors.
-      roots = {}
-      path = cls._nightlyStartingPath()
-
-      for rhel in cls._findMajorRhels(path,
-                                      r"<a\s+href=\"(rhel-(\d+))/\">\1/</a>"):
-        roots.update(cls._availableNightlyMinors(
-                "{0}/{1}/nightly/{2}".format(path, rhel[0], rhel[0].upper())))
-      cls.__agnosticRoots["nightly"] = roots
-
-    return cls. _filterNonExistentArchitecture(cls.__agnosticRoots["nightly"],
-                                               architecture)
-
-  ####################################################################
-  @classmethod
-  def _availableReleased(cls, architecture):
-    if "released" not in cls.__agnosticRoots:
-      # Try to get the released roots from beaker.  If beaker cannot be
-      # reached get them from the web.
-      roots = {}
-      try:
-        roots = cls._beakerRoots()
-      except RepositoryBeakerNotFound:
-        # Find all the released versions greater than or equal to the RHEL
-        # minimum major and then find their minors.
-        path = cls._releasedStartingPath()
-        for rhel in cls._findMajorRhels(
-                                path, r"<a\s+href=\"(RHEL-(\d+))/\">\1/</a>"):
-          roots.update(cls._availableReleasedMinors(
-                          "{0}/{1}".format(path, rhel[0]), int(rhel[1])))
-
-      cls.__agnosticRoots["released"] = roots
-
-    return cls. _filterNonExistentArchitecture(cls.__agnosticRoots["released"],
-                                               architecture)
-
   ####################################################################
   @classmethod
   def _beakerRoots(cls):
@@ -100,6 +37,66 @@ class RHEL(Repository):
         # If it's not we only know we've exhausted the current major.
         if minor == 0:
           break
+
+    return roots
+
+  ####################################################################
+  @classmethod
+  def _filterNonExistentArchitecture(cls, repos, architecture):
+    regex = re.compile(r"(?i)<a\s+href=\"({0}/)\">\1</a>".format(architecture))
+
+    return dict([ (key, value)
+      for (key, value) in repos.items()
+        if re.search(regex,
+                     cls._uri_contents(
+                      "{0}/{1}".format(value,
+                                       "Server" if float(key) < 8
+                                                else "BaseOS"))) is not None ])
+
+  ####################################################################
+  @classmethod
+  def _findAgnosticLatestRoots(cls, architecture):
+    # Find all the latest versions greater than or equal to the RHEL
+    # minimum major and then find their minors.
+    roots = {}
+    path = cls._latestStartingPath()
+
+    for rhel in cls._findMajorRhels(path,
+                                    r"<a\s+href=\"(rhel-(\d+))/\">\1/</a>"):
+      roots.update(cls._availableLatestMinors(
+              "{0}/{1}/rel-eng/{2}".format(path, rhel[0], rhel[0].upper())))
+    return roots
+
+  ####################################################################
+  @classmethod
+  def _findAgnosticNightlyRoots(cls, architecture):
+    # Find all the nightly versions greater than or equal to the RHEL
+    # minimum major and then find their minors.
+    roots = {}
+    path = cls._nightlyStartingPath()
+
+    for rhel in cls._findMajorRhels(path,
+                                    r"<a\s+href=\"(rhel-(\d+))/\">\1/</a>"):
+      roots.update(cls._availableNightlyMinors(
+              "{0}/{1}/nightly/{2}".format(path, rhel[0], rhel[0].upper())))
+    return roots
+
+  ####################################################################
+  @classmethod
+  def _findAgnosticReleasedRoots(cls, architecture):
+    # Try to get the released roots from beaker.  If beaker cannot be
+    # reached get them from the web.
+    roots = {}
+    try:
+      roots = cls._beakerRoots()
+    except RepositoryBeakerNotFound:
+      # Find all the released versions greater than or equal to the RHEL
+      # minimum major and then find their minors.
+      path = cls._releasedStartingPath()
+      for rhel in cls._findMajorRhels(
+                              path, r"<a\s+href=\"(RHEL-(\d+))/\">\1/</a>"):
+        roots.update(cls._availableReleasedMinors(
+                        "{0}/{1}".format(path, rhel[0]), int(rhel[1])))
 
     return roots
 
@@ -198,22 +195,6 @@ class RHEL(Repository):
           available["{0}.{1}".format(major, maxMatch[1])] = (
             "http://{0}{1}/{2}".format(cls._host(), path, maxMatch[0]))
     return available
-
-  ####################################################################
-  @classmethod
-  def _filterNonExistentArchitecture(cls, repoUris, architecture):
-    """Filters out the repo uris that don't have a subdir for the
-    specified archtecture returning only those that do.
-    """
-    regex = re.compile(r"(?i)<a\s+href=\"({0}/)\">\1</a>".format(architecture))
-
-    return dict([ (key, value)
-      for (key, value) in repoUris.items()
-        if re.search(regex,
-                     cls._uri_contents(
-                      "{0}/{1}".format(value,
-                                       "Server" if float(key) < 8
-                                                else "BaseOS"))) is not None ])
 
   ####################################################################
   @classmethod

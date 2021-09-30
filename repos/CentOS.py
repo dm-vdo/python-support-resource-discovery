@@ -10,50 +10,8 @@ class CentOS(Repository):
   __CENTOS_MINIMUM_MAJOR = 8
   __CENTOS_MINIMUM_MINOR = 3
 
-  # All found roots with no distinction as to architecture.
-  # Keyed by category.
-  __agnosticRoots = {}
-
   ####################################################################
   # Overridden methods
-  ####################################################################
-  @classmethod
-  def _availableLatest(cls, architecture):
-    return cls._availableReleased(architecture)
-
-  ####################################################################
-  @classmethod
-  def _availableNightly(cls, architecture):
-    return cls._availableReleased(architecture)
-
-  ####################################################################
-  @classmethod
-  def _availableReleased(cls, architecture):
-    if "released" not in cls.__agnosticRoots:
-      # Try to get the released roots from beaker.  If beaker cannot be
-      # reached get them from the web.
-      roots = {}
-      try:
-        roots = cls._beakerRoots()
-      except RepositoryBeakerNotFound:
-        path = cls._releasedStartingPath()
-        data = cls._path_contents("{0}/".format(path))
-
-        # Find all the released versions greater than or equal to the CentOS
-        # minimum major and then find their minors.
-        regex = r"(?i)<a\s+href=\"(centos-(\d+))/\">\1/</a>"
-        for release in filter(
-                        lambda x: int(x[1]) >= cls.__CENTOS_MINIMUM_MAJOR,
-                        re.findall(regex, data)):
-          roots.update(cls._availableReleasedMinors(
-                          "{0}/centos-{1}".format(path, release[1]),
-                          int(release[1])))
-
-      cls.__agnosticRoots["released"] = roots
-
-    return cls. _filterNonExistentArchitecture(cls.__agnosticRoots["released"],
-                                               architecture)
-
   ####################################################################
   @classmethod
   def _beakerRoots(cls):
@@ -79,6 +37,50 @@ class CentOS(Repository):
         if minor == 0:
           break
 
+    return roots
+
+  ####################################################################
+  @classmethod
+  def _filterNonExistentArchitecture(cls, repos, architecture):
+    regex = re.compile(r"(?i)<a\s+href=\"({0}/)\">\1</a>".format(architecture))
+
+    return dict([ (key, value)
+      for (key, value) in repos.items()
+        if re.search(regex,
+                     cls._uri_contents(
+                      "{0}/{1}".format(value, "BaseOS"))) is not None ])
+
+  ####################################################################
+  @classmethod
+  def _findAgnosticLatestRoots(cls, architecture):
+    return cls._findAgnosticReleasedRoots(architecture)
+
+  ####################################################################
+  @classmethod
+  def _findAgnosticNightlyRoots(cls, architecture):
+    return cls._findAgnosticReleasedRoots(architecture)
+
+  ####################################################################
+  @classmethod
+  def _findAgnosticReleasedRoots(cls, architecture):
+    # Try to get the released roots from beaker.  If beaker cannot be
+    # reached get them from the web.
+    roots = {}
+    try:
+      roots = cls._beakerRoots()
+    except RepositoryBeakerNotFound:
+      path = cls._releasedStartingPath()
+      data = cls._path_contents("{0}/".format(path))
+
+      # Find all the released versions greater than or equal to the CentOS
+      # minimum major and then find their minors.
+      regex = r"(?i)<a\s+href=\"(centos-(\d+))/\">\1/</a>"
+      for release in filter(
+                      lambda x: int(x[1]) >= cls.__CENTOS_MINIMUM_MAJOR,
+                      re.findall(regex, data)):
+        roots.update(cls._availableReleasedMinors(
+                        "{0}/centos-{1}".format(path, release[1]),
+                        int(release[1])))
     return roots
 
   ####################################################################
@@ -120,18 +122,3 @@ class CentOS(Repository):
           available["{0}.{1}".format(major, maxMatch[1])] = (
             "http://{0}{1}/{2}".format(cls._host(), path, maxMatch[0]))
     return available
-
-  ####################################################################
-  @classmethod
-  def _filterNonExistentArchitecture(cls, repoUris, architecture):
-    """Filters out the repo uris that don't have a subdir for the
-    specified archtecture returning only those that do.
-    """
-    regex = re.compile(r"(?i)<a\s+href=\"({0}/)\">\1</a>".format(architecture))
-
-    return dict([ (key, value)
-      for (key, value) in repoUris.items()
-        if re.search(regex,
-                     cls._uri_contents(
-                      "{0}/{1}".format(value, "BaseOS"))) is not None ])
-
