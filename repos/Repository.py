@@ -10,6 +10,7 @@ else:
   from urllib import parse as urlparse
 
 import errno
+import functools
 import json
 import socket
 import subprocess
@@ -70,9 +71,17 @@ class Repository(object):
   #
   # We start with None so that separate dictionaries are created per
   # subclass.
+  #
+  # All found roots with no distinction as to architecture.
+  # Keyed by category.
+  __agnosticRoots = None
+
+  # Available roots; keyed by architecture.
   __cachedLatest = None
   __cachedNightly = None
   __cachedReleased = None
+
+  # Cached contents to avoid multiple requests for the same data.
   __cachedUriContents = {}
 
   ####################################################################
@@ -118,6 +127,30 @@ class Repository(object):
 
   ####################################################################
   # Protected methods
+  ####################################################################
+  @classmethod
+  def _agnosticLatest(cls, architecture):
+    return cls.__privateAgnosticRoots(cls._categoryLatest(architecture),
+                                      functools.partial(
+                                        cls._findAgnosticLatestRoots,
+                                        architecture))
+
+  ####################################################################
+  @classmethod
+  def _agnosticNightly(cls, architecture):
+    return cls.__privateAgnosticRoots(cls._categoryNightly(architecture),
+                                      functools.partial(
+                                        cls._findAgnosticNightlyRoots,
+                                        architecture))
+
+  ####################################################################
+  @classmethod
+  def _agnosticReleased(cls, architecture):
+    return cls.__privateAgnosticRoots(cls._categoryReleased(architecture),
+                                      functools.partial(
+                                        cls._findAgnosticReleasedRoots,
+                                        architecture))
+
   ####################################################################
   @classmethod
   def _availableLatest(cls, architecture):
@@ -203,7 +236,7 @@ class Repository(object):
 
   ####################################################################
   @classmethod
-  def _cachedLatest(cls, architecture):
+  def _cachedLatest(cls, architecture = None):
     if cls.__cachedLatest is None:
       cls.__cachedLatest = {}
     if architecture is None:
@@ -214,7 +247,7 @@ class Repository(object):
 
   ####################################################################
   @classmethod
-  def _cachedNightly(cls, architecture):
+  def _cachedNightly(cls, architecture = None):
     if cls.__cachedNightly is None:
       cls.__cachedNightly = {}
     if architecture is None:
@@ -225,7 +258,7 @@ class Repository(object):
 
   ####################################################################
   @classmethod
-  def _cachedReleased(cls, architecture):
+  def _cachedReleased(cls, architecture = None):
     if cls.__cachedReleased is None:
       cls.__cachedReleased = {}
     if architecture is None:
@@ -233,6 +266,36 @@ class Repository(object):
     if architecture not in cls.__cachedReleased:
       cls.__cachedReleased[architecture] = cls._availableReleased(architecture)
     return cls.__cachedReleased[architecture].copy()
+
+  ####################################################################
+  @classmethod
+  def _categoryLatest(cls, architecture):
+    return "latest"
+
+  ####################################################################
+  @classmethod
+  def _categoryNightly(cls, architecture):
+    return "nightly"
+
+  ####################################################################
+  @classmethod
+  def _categoryReleased(cls, architecture):
+    return "released"
+
+  ####################################################################
+  @classmethod
+  def _findAgnosticLatestRoots(cls, architecture):
+    raise NotImplementedError
+
+  ####################################################################
+  @classmethod
+  def _findAgnosticNightlyRoots(cls, architecture):
+    raise NotImplementedError
+
+  ####################################################################
+  @classmethod
+  def _findAgnosticReleasedRoots(cls, architecture):
+    raise NotImplementedError
 
   ####################################################################
   @classmethod
@@ -283,3 +346,14 @@ class Repository(object):
         cls.__cachedUriContents[uri] = ""
 
     return cls.__cachedUriContents[uri]
+
+  ####################################################################
+  # Private methods
+  ####################################################################
+  @classmethod
+  def __privateAgnosticRoots(cls, category, finder):
+    if cls.__agnosticRoots is None:
+      cls.__agnosticRoots = {}
+    if category not in cls.__agnosticRoots:
+      cls.__agnosticRoots[category] = finder()
+    return cls.__agnosticRoots[category]
