@@ -15,27 +15,6 @@ class Fedora(Repository):
   # Overridden methods
   ####################################################################
   @classmethod
-  def _availableLatest(cls, architecture):
-    return cls. _filterNonExistentArchitecture(
-                                          cls._agnosticLatest(architecture),
-                                          architecture)
-
-  ####################################################################
-  @classmethod
-  def _availableNightly(cls, architecture):
-    return cls. _filterNonExistentArchitecture(
-                                          cls._agnosticNightly(architecture),
-                                          architecture)
-
-  ####################################################################
-  @classmethod
-  def _availableReleased(cls, architecture):
-    return cls. _filterNonExistentArchitecture(
-                                          cls._agnosticReleased(architecture),
-                                          architecture)
-
-  ####################################################################
-  @classmethod
   def _beakerRoots(cls):
     roots = {}
     major = cls.__FEDORA_MINIMUM_MAJOR - 1
@@ -69,6 +48,16 @@ class Fedora(Repository):
   @classmethod
   def _categoryReleased(cls, architecture):
     return cls._releasedStartingPath(architecture).replace("/", "-")
+
+  ####################################################################
+  @classmethod
+  def _filterNonExistentArchitecture(cls, repos, architecture):
+    repos = dict([ (key, value)
+                      for (key, value) in repos.items()
+                        if cls._uri_contents(
+                          "{0}/Everything/{1}".format(value,
+                                                      architecture)) != "" ])
+    return repos
 
   ####################################################################
   @classmethod
@@ -145,19 +134,6 @@ class Fedora(Repository):
       host = "archives.fedoraproject.org"
       path = path.replace("/pub/", "/pub/archive/", 1)
     return "http://{0}{1}/{2}".format(host, path, version)
-
-  ####################################################################
-  @classmethod
-  def _filterNonExistentArchitecture(cls, roots, architecture):
-    """Filters out the repo roots that don't have a subdir for the
-    specified archtecture returning only those that do.
-    """
-    roots = dict([ (key, value)
-                      for (key, value) in roots.items()
-                        if cls._uri_contents(
-                          "{0}/Everything/{1}".format(value,
-                                                      architecture)) != "" ])
-    return roots
 
   ####################################################################
   @classmethod

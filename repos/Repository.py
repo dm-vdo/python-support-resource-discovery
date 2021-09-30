@@ -161,17 +161,23 @@ class Repository(object):
   ####################################################################
   @classmethod
   def _availableLatest(cls, architecture):
-    raise NotImplementedError
+    return cls. _filterNonExistentArchitecture(
+                                            cls._agnosticLatest(architecture),
+                                            architecture)
 
   ####################################################################
   @classmethod
   def _availableNightly(cls, architecture):
-    raise NotImplementedError
+    return cls. _filterNonExistentArchitecture(
+                                          cls._agnosticNightly(architecture),
+                                          architecture)
 
   ####################################################################
   @classmethod
   def _availableReleased(cls, architecture):
-    raise NotImplementedError
+    return cls. _filterNonExistentArchitecture(
+                                          cls._agnosticReleased(architecture),
+                                          architecture)
 
   ####################################################################
   @classmethod
@@ -294,6 +300,14 @@ class Repository(object):
     # What is returned must be suitable for use as a file name w/o special
     # handling (e.g., requiring quoting).
     return "released"
+
+  ####################################################################
+  @classmethod
+  def _filterNonExistentArchitecture(cls, repos, architecture):
+    """Filters out the repos that don't have a subdir for the
+    specified archtecture returning only those that do.
+    """
+    raise NotImplementedError
 
   ####################################################################
   @classmethod
