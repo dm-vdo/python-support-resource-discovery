@@ -57,7 +57,7 @@ class Fedora(Repository):
   ####################################################################
   @classmethod
   def _categoryLatest(cls, architecture):
-    return "{0}/development".format(cls._latestStartingPath(architecture))
+    return cls._latestStartingPath(architecture).replace("/", "-")
 
   ####################################################################
   @classmethod
@@ -68,12 +68,12 @@ class Fedora(Repository):
   ####################################################################
   @classmethod
   def _categoryReleased(cls, architecture):
-    return "{0}/releases".format(cls._releasedStartingPath(architecture))
+    return cls._releasedStartingPath(architecture).replace("/", "-")
 
   ####################################################################
   @classmethod
   def _findAgnosticLatestRoots(cls, architecture):
-    return cls._agnosticCommon(cls._categoryLatest(architecture))
+    return cls._agnosticCommon(cls._latestStartingPath(architecture))
 
   ####################################################################
   @classmethod
@@ -87,7 +87,7 @@ class Fedora(Repository):
   ####################################################################
   @classmethod
   def _findAgnosticReleasedRoots(cls, architecture):
-    return cls._agnosticCommon(cls._categoryReleased(architecture))
+    return cls._agnosticCommon(cls._releasedStartingPath(architecture))
 
   ####################################################################
   @classmethod
@@ -96,13 +96,13 @@ class Fedora(Repository):
 
   ####################################################################
   @classmethod
+  def _latestStartingPath(cls, architecture):
+    return "{0}/development".format(cls._startingPathPrefix(architecture))
+
+  ####################################################################
+  @classmethod
   def _releasedStartingPath(cls, architecture):
-    path = "/pub/fedora"
-    if not architectures.Architecture.fedoraSecondary(architecture):
-      path = "{0}/linux".format(path)
-    else:
-      path = "{0}-secondary".format(path)
-    return path
+    return "{0}/releases".format(cls._startingPathPrefix(architecture))
 
   ####################################################################
   # Protected methods
@@ -158,3 +158,13 @@ class Fedora(Repository):
                           "{0}/Everything/{1}".format(value,
                                                       architecture)) != "" ])
     return roots
+
+  ####################################################################
+  @classmethod
+  def _startingPathPrefix(cls, architecture):
+    path = "/pub/fedora"
+    if not architectures.Architecture.fedoraSecondary(architecture):
+      path = "{0}/linux".format(path)
+    else:
+      path = "{0}-secondary".format(path)
+    return path

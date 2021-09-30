@@ -270,16 +270,22 @@ class Repository(object):
   ####################################################################
   @classmethod
   def _categoryLatest(cls, architecture):
+    # What is returned must be suitable for use as a file name w/o special
+    # handling (e.g., requiring quoting).
     return "latest"
 
   ####################################################################
   @classmethod
   def _categoryNightly(cls, architecture):
+    # What is returned must be suitable for use as a file name w/o special
+    # handling (e.g., requiring quoting).
     return "nightly"
 
   ####################################################################
   @classmethod
   def _categoryReleased(cls, architecture):
+    # What is returned must be suitable for use as a file name w/o special
+    # handling (e.g., requiring quoting).
     return "released"
 
   ####################################################################
