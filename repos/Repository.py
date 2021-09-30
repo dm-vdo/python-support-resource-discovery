@@ -161,23 +161,32 @@ class Repository(object):
   ####################################################################
   @classmethod
   def _availableLatest(cls, architecture):
-    return cls. _filterNonExistentArchitecture(
-                                            cls._agnosticLatest(architecture),
-                                            architecture)
+    return cls.__privateAvailableRoots(cls._categoryLatest(architecture),
+                                       architecture,
+                                       functools.partial(
+                                         cls. _filterNonExistentArchitecture,
+                                         cls._agnosticLatest(architecture),
+                                         architecture))
 
   ####################################################################
   @classmethod
   def _availableNightly(cls, architecture):
-    return cls. _filterNonExistentArchitecture(
-                                          cls._agnosticNightly(architecture),
-                                          architecture)
+    return cls.__privateAvailableRoots(cls._categoryNightly(architecture),
+                                       architecture,
+                                       functools.partial(
+                                         cls. _filterNonExistentArchitecture,
+                                         cls._agnosticNightly(architecture),
+                                         architecture))
 
   ####################################################################
   @classmethod
   def _availableReleased(cls, architecture):
-    return cls. _filterNonExistentArchitecture(
-                                          cls._agnosticReleased(architecture),
-                                          architecture)
+    return cls.__privateAvailableRoots(cls._categoryReleased(architecture),
+                                       architecture,
+                                       functools.partial(
+                                         cls. _filterNonExistentArchitecture,
+                                         cls._agnosticReleased(architecture),
+                                         architecture))
 
   ####################################################################
   @classmethod
@@ -390,6 +399,18 @@ class Repository(object):
 
   ####################################################################
   @classmethod
+  def __privateAvailableDirPath(cls):
+    return cls.__privateAgnosticDirPath()
+
+  ####################################################################
+  @classmethod
+  def __privateAvailableFilePath(cls, category, architecture):
+    return os.path.sep.join([cls.__privateAvailableDirPath(),
+                             "available.{0}.{1}.json".format(category,
+                                                             architecture)])
+
+  ####################################################################
+  @classmethod
   def __privateAgnosticRoots(cls, category, finder):
     if cls.__agnosticRoots is None:
       cls.__agnosticRoots = {}
@@ -399,6 +420,15 @@ class Repository(object):
         cls.__privateSaveAgnosticFile(category, finder())
         cls.__privateLoadAgnosticFile(category)
     return cls.__agnosticRoots[category]
+
+  ####################################################################
+  @classmethod
+  def __privateAvailableRoots(cls, category, architecture, finder):
+    roots = cls.__privateLoadAvailableFile(category, architecture)
+    if roots is None:
+      cls.__privateSaveAvailableFile(category, architecture, finder())
+      roots = cls.__privateLoadAvailableFile(category, architecture)
+    return roots
 
   ####################################################################
   @classmethod
@@ -415,6 +445,21 @@ class Repository(object):
 
   ####################################################################
   @classmethod
+  def __privateLoadAvailableFile(cls, category, architecture):
+    roots = None
+    path = cls.__privateAvailableFilePath(category, architecture)
+    if os.path.exists(path):
+      modTime = os.path.getmtime(path)
+      # Remove the file if it's been more than a day since it was updated.
+      if (time.time() - modTime) >= 86400:
+        os.remove(path)
+      else:
+        with open(path, "r") as f:
+          roots = json.loads(f.read())
+    return roots
+
+  ####################################################################
+  @classmethod
   def __privateSaveAgnosticFile(cls, category, roots):
     try:
       os.makedirs(cls.__privateAgnosticDirPath(), 0o700)
@@ -422,4 +467,16 @@ class Repository(object):
       if ex.errno != errno.EEXIST:
         raise
     with open(cls.__privateAgnosticFilePath(category), "w+") as f:
+      f.write(json.dumps(roots))
+
+  ####################################################################
+  @classmethod
+  def __privateSaveAvailableFile(cls, category, architecture, roots):
+    try:
+      os.makedirs(cls.__privateAvailableDirPath(), 0o700)
+    except OSError as ex:
+      if ex.errno != errno.EEXIST:
+        raise
+    with open(cls.__privateAvailableFilePath(category, architecture),
+              "w+") as f:
       f.write(json.dumps(roots))
