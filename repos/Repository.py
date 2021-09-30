@@ -372,7 +372,7 @@ class Repository(object):
   @classmethod
   def __privateAgnosticFilePath(cls, category):
     return os.path.sep.join([cls.__privateAgnosticDirPath(),
-                             "{0}.json".format(category)])
+                             "agnostic.{0}.json".format(category)])
 
   ####################################################################
   @classmethod
