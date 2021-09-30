@@ -12,8 +12,10 @@ else:
 import errno
 import functools
 import json
+import os
 import socket
 import subprocess
+import time
 
 import architectures
 
@@ -124,6 +126,11 @@ class Repository(object):
     available.update(cls._cachedLatest(architecture))
     available.update(cls._cachedNightly(architecture))
     return available
+
+  ####################################################################
+  @classmethod
+  def className(cls):
+    return cls.__name__
 
   ####################################################################
   # Protected methods
@@ -357,9 +364,48 @@ class Repository(object):
   # Private methods
   ####################################################################
   @classmethod
+  def __privateAgnosticDirPath(cls):
+    return os.path.sep.join([os.environ["HOME"], ".python-infrastructure",
+                             "repos", cls.className()])
+
+  ####################################################################
+  @classmethod
+  def __privateAgnosticFilePath(cls, category):
+    return os.path.sep.join([cls.__privateAgnosticDirPath(),
+                             "{0}.json".format(category)])
+
+  ####################################################################
+  @classmethod
   def __privateAgnosticRoots(cls, category, finder):
     if cls.__agnosticRoots is None:
       cls.__agnosticRoots = {}
     if category not in cls.__agnosticRoots:
-      cls.__agnosticRoots[category] = finder()
+      cls.__privateLoadAgnosticFile(category)
+      if category not in cls.__agnosticRoots:
+        cls.__privateSaveAgnosticFile(category, finder())
+        cls.__privateLoadAgnosticFile(category)
     return cls.__agnosticRoots[category]
+
+  ####################################################################
+  @classmethod
+  def __privateLoadAgnosticFile(cls, category):
+    path = cls.__privateAgnosticFilePath(category)
+    if os.path.exists(path):
+      modTime = os.path.getmtime(path)
+      # Remove the file if it's been more than a day since it was updated.
+      if (time.time() - modTime) >= 86400:
+        os.remove(path)
+      else:
+        with open(path, "r") as f:
+          cls.__agnosticRoots[category] = json.loads(f.read())
+
+  ####################################################################
+  @classmethod
+  def __privateSaveAgnosticFile(cls, category, roots):
+    try:
+      os.makedirs(cls.__privateAgnosticDirPath(), 0o700)
+    except OSError as ex:
+      if ex.errno != errno.EEXIST:
+        raise
+    with open(cls.__privateAgnosticFilePath(category), "w+") as f:
+      f.write(json.dumps(roots))
