@@ -387,27 +387,13 @@ class Repository(object):
   # Private methods
   ####################################################################
   @classmethod
-  def __privateAgnosticDirPath(cls):
-    return os.path.sep.join([os.environ["HOME"], ".python-infrastructure",
-                             "repos", cls.className()])
+  def __privateAgnosticFileName(cls, category):
+    return "agnostic.{0}.json".format(category)
 
   ####################################################################
   @classmethod
-  def __privateAgnosticFilePath(cls, category):
-    return os.path.sep.join([cls.__privateAgnosticDirPath(),
-                             "agnostic.{0}.json".format(category)])
-
-  ####################################################################
-  @classmethod
-  def __privateAvailableDirPath(cls):
-    return cls.__privateAgnosticDirPath()
-
-  ####################################################################
-  @classmethod
-  def __privateAvailableFilePath(cls, category, architecture):
-    return os.path.sep.join([cls.__privateAvailableDirPath(),
-                             "available.{0}.{1}.json".format(category,
-                                                             architecture)])
+  def __privateAvailableFileName(cls, category, architecture):
+    return "available.{0}.{1}.json".format(category, architecture)
 
   ####################################################################
   @classmethod
@@ -415,68 +401,76 @@ class Repository(object):
     if cls.__agnosticRoots is None:
       cls.__agnosticRoots = {}
     if category not in cls.__agnosticRoots:
-      cls.__privateLoadAgnosticFile(category)
-      if category not in cls.__agnosticRoots:
-        cls.__privateSaveAgnosticFile(category, finder())
-        cls.__privateLoadAgnosticFile(category)
+      openFile = cls.__privateOpenFile(cls.__privateAgnosticFileName(category))
+      try:
+        roots = cls.__privateLoadFile(openFile)
+        if roots is None:
+          cls.__privateSaveFile(openFile, finder())
+          roots = cls.__privateLoadFile(openFile)
+        cls.__agnosticRoots[category] = roots
+      finally:
+        openFile.close()
     return cls.__agnosticRoots[category]
 
   ####################################################################
   @classmethod
   def __privateAvailableRoots(cls, category, architecture, finder):
-    roots = cls.__privateLoadAvailableFile(category, architecture)
-    if roots is None:
-      cls.__privateSaveAvailableFile(category, architecture, finder())
-      roots = cls.__privateLoadAvailableFile(category, architecture)
+    openFile = cls.__privateOpenFile(
+                 cls.__privateAvailableFileName(category, architecture))
+    try:
+      roots = cls.__privateLoadFile(openFile)
+      if roots is None:
+        cls.__privateSaveFile(openFile, finder())
+        roots = cls.__privateLoadFile(openFile)
+    finally:
+      openFile.close()
     return roots
 
   ####################################################################
   @classmethod
-  def __privateLoadAgnosticFile(cls, category):
-    path = cls.__privateAgnosticFilePath(category)
-    if os.path.exists(path):
-      modTime = os.path.getmtime(path)
-      # Remove the file if it's been more than a day since it was updated.
-      if (time.time() - modTime) >= 86400:
-        os.remove(path)
-      else:
-        with open(path, "r") as f:
-          cls.__agnosticRoots[category] = json.loads(f.read())
+  def __privateDirPath(cls):
+    return os.path.sep.join([os.environ["HOME"], ".python-infrastructure",
+                             "repos", cls.className()])
 
   ####################################################################
   @classmethod
-  def __privateLoadAvailableFile(cls, category, architecture):
+  def __privateLoadFile(cls, openFile):
     roots = None
-    path = cls.__privateAvailableFilePath(category, architecture)
-    if os.path.exists(path):
-      modTime = os.path.getmtime(path)
-      # Remove the file if it's been more than a day since it was updated.
-      if (time.time() - modTime) >= 86400:
-        os.remove(path)
-      else:
-        with open(path, "r") as f:
-          roots = json.loads(f.read())
+    stats = os.fstat(openFile.fileno())
+    # Truncate the file if it's been more than a day since it was updated.
+    if (time.time() - stats.st_mtime) >= 86400:
+      openFile.truncate()
+    elif stats.st_size > 0:
+      # Seek to zero in case this is a load after a save.
+      openFile.seek(0)
+      roots = json.loads(openFile.read())
     return roots
 
   ####################################################################
   @classmethod
-  def __privateSaveAgnosticFile(cls, category, roots):
+  def __privateOpenFile(cls, name):
     try:
-      os.makedirs(cls.__privateAgnosticDirPath(), 0o700)
+      os.makedirs(cls.__privateDirPath(), 0o700)
     except OSError as ex:
       if ex.errno != errno.EEXIST:
         raise
-    with open(cls.__privateAgnosticFilePath(category), "w+") as f:
-      f.write(json.dumps(roots))
+    try:
+      fd = os.open(os.path.sep.join([cls.__privateDirPath(), name]),
+                   os.O_CREAT | os.O_RDWR | os.O_EXCL, 0o640)
+    except OSError as ex:
+      if ex.errno != errno.EEXIST:
+        raise
+      fd = os.open(os.path.sep.join([cls.__privateDirPath(), name]),
+                   os.O_RDWR | os.O_EXCL, 0o640)
+    try:
+      openFile = os.fdopen(fd, "r+")
+    except:
+      os.close(fd)
+    return openFile
 
   ####################################################################
   @classmethod
-  def __privateSaveAvailableFile(cls, category, architecture, roots):
-    try:
-      os.makedirs(cls.__privateAvailableDirPath(), 0o700)
-    except OSError as ex:
-      if ex.errno != errno.EEXIST:
-        raise
-    with open(cls.__privateAvailableFilePath(category, architecture),
-              "w+") as f:
-      f.write(json.dumps(roots))
+  def __privateSaveFile(cls, openFile, roots):
+    openFile.write(json.dumps(roots))
+    openFile.flush()
+    os.fsync(openFile.fileno())
