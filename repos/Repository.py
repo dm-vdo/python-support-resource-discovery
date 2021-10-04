@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 # Although the requests python package would simplify the processing slightly
 # there is an Objective-C runtime error on macOS using it in an ansible
 # context.  Thus we use httplib and urlparse.
@@ -15,6 +17,7 @@ import json
 import os
 import socket
 import subprocess
+import sys
 import time
 
 import architectures
@@ -405,6 +408,8 @@ class Repository(object):
       try:
         roots = cls.__privateLoadFile(openFile)
         if roots is None:
+          print("Updaating {0} {1} repos".format(cls.className(), category),
+                file = sys.stderr)
           cls.__privateSaveFile(openFile, finder())
           roots = cls.__privateLoadFile(openFile)
         cls.__agnosticRoots[category] = roots
@@ -420,6 +425,10 @@ class Repository(object):
     try:
       roots = cls.__privateLoadFile(openFile)
       if roots is None:
+        print("Updaating {0} {1} {2} repos ".format(cls.className(),
+                                                    category,
+                                                    architecture),
+              file = sys.stderr)
         cls.__privateSaveFile(openFile, finder())
         roots = cls.__privateLoadFile(openFile)
     finally:
