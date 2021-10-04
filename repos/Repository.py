@@ -408,7 +408,8 @@ class Repository(object):
       try:
         roots = cls.__privateLoadFile(openFile)
         if roots is None:
-          print("Updaating {0} {1} repos".format(cls.className(), category),
+          print("Updaating saved {0} {1} repos".format(cls.className(),
+                                                       category),
                 file = sys.stderr)
           cls.__privateSaveFile(openFile, finder())
           roots = cls.__privateLoadFile(openFile)
@@ -425,9 +426,9 @@ class Repository(object):
     try:
       roots = cls.__privateLoadFile(openFile)
       if roots is None:
-        print("Updaating {0} {1} {2} repos ".format(cls.className(),
-                                                    category,
-                                                    architecture),
+        print("Updaating saved {0} {1} {2} repos ".format(cls.className(),
+                                                          category,
+                                                          architecture),
               file = sys.stderr)
         cls.__privateSaveFile(openFile, finder())
         roots = cls.__privateLoadFile(openFile)
