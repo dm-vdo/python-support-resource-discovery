@@ -424,7 +424,9 @@ class Repository(object):
     openFile = cls.__privateOpenFile(
                  cls.__privateAvailableFileName(category, architecture))
     try:
-      roots = cls.__privateLoadFile(openFile)
+      with cls.__privateOpenFile(cls.__privateAgnosticFileName(category)) as f:
+        mtime = cls.__privateFileMtime(f)
+      roots = cls.__privateLoadFile(openFile, mtime)
       if roots is None:
         print("Updaating saved {0} {1} {2} repos ".format(cls.className(),
                                                           category,
@@ -444,17 +446,25 @@ class Repository(object):
 
   ####################################################################
   @classmethod
-  def __privateLoadFile(cls, openFile):
+  def __privateLoadFile(cls, openFile, dependencyMtime = None):
     roots = None
     stats = os.fstat(openFile.fileno())
-    # Truncate the file if it's been more than a day since it was updated.
-    if (time.time() - stats.st_mtime) >= 86400:
+    # Truncate the file if it's dependency is more recent than the file itself
+    # or it's been more than a day since it was updated.
+    if (((dependencyMtime is not None) and (dependencyMtime > stats.st_mtime))
+        or ((time.time() - stats.st_mtime) >= 86400)):
       openFile.truncate()
     elif stats.st_size > 0:
       # Seek to zero in case this is a load after a save.
       openFile.seek(0)
       roots = json.loads(openFile.read())
     return roots
+
+  ####################################################################
+  @classmethod
+  def __privateFileMtime(cls, openFile):
+    stats = os.fstat(openFile.fileno())
+    return stats.st_mtime
 
   ####################################################################
   @classmethod
