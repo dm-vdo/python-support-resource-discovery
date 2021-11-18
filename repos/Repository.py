@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 # Although the requests python package would simplify the processing slightly
 # there is an Objective-C runtime error on macOS using it in an ansible
 # context.  Thus we use httplib and urlparse.
@@ -10,11 +12,15 @@ else:
   from urllib import parse as urlparse
 
 import errno
+import functools
 import json
+import os
 import socket
 import subprocess
+import sys
+import time
 
-from .submodules.architectures import Architecture
+import architectures
 
 ######################################################################
 ######################################################################
@@ -70,9 +76,17 @@ class Repository(object):
   #
   # We start with None so that separate dictionaries are created per
   # subclass.
+  #
+  # All found roots with no distinction as to architecture.
+  # Keyed by category.
+  __agnosticRoots = None
+
+  # Available roots; keyed by architecture.
   __cachedLatest = None
   __cachedNightly = None
   __cachedReleased = None
+
+  # Cached contents to avoid multiple requests for the same data.
   __cachedUriContents = {}
 
   ####################################################################
@@ -117,21 +131,65 @@ class Repository(object):
     return available
 
   ####################################################################
+  @classmethod
+  def className(cls):
+    return cls.__name__
+
+  ####################################################################
   # Protected methods
   ####################################################################
   @classmethod
+  def _agnosticLatest(cls, architecture):
+    return cls.__privateAgnosticRoots(cls._categoryLatest(architecture),
+                                      functools.partial(
+                                        cls._findAgnosticLatestRoots,
+                                        architecture))
+
+  ####################################################################
+  @classmethod
+  def _agnosticNightly(cls, architecture):
+    return cls.__privateAgnosticRoots(cls._categoryNightly(architecture),
+                                      functools.partial(
+                                        cls._findAgnosticNightlyRoots,
+                                        architecture))
+
+  ####################################################################
+  @classmethod
+  def _agnosticReleased(cls, architecture):
+    return cls.__privateAgnosticRoots(cls._categoryReleased(architecture),
+                                      functools.partial(
+                                        cls._findAgnosticReleasedRoots,
+                                        architecture))
+
+  ####################################################################
+  @classmethod
   def _availableLatest(cls, architecture):
-    raise NotImplementedError
+    return cls.__privateAvailableRoots(cls._categoryLatest(architecture),
+                                       architecture,
+                                       functools.partial(
+                                         cls. _filterNonExistentArchitecture,
+                                         cls._agnosticLatest(architecture),
+                                         architecture))
 
   ####################################################################
   @classmethod
   def _availableNightly(cls, architecture):
-    raise NotImplementedError
+    return cls.__privateAvailableRoots(cls._categoryNightly(architecture),
+                                       architecture,
+                                       functools.partial(
+                                         cls. _filterNonExistentArchitecture,
+                                         cls._agnosticNightly(architecture),
+                                         architecture))
 
   ####################################################################
   @classmethod
   def _availableReleased(cls, architecture):
-    raise NotImplementedError
+    return cls.__privateAvailableRoots(cls._categoryReleased(architecture),
+                                       architecture,
+                                       functools.partial(
+                                         cls. _filterNonExistentArchitecture,
+                                         cls._agnosticReleased(architecture),
+                                         architecture))
 
   ####################################################################
   @classmethod
@@ -203,36 +261,80 @@ class Repository(object):
 
   ####################################################################
   @classmethod
-  def _cachedLatest(cls, architecture):
+  def _cachedLatest(cls, architecture = None):
     if cls.__cachedLatest is None:
       cls.__cachedLatest = {}
     if architecture is None:
-      architecture = Architecture.defaultChoice().name()
+      architecture = architectures.Architecture.defaultChoice().name()
     if architecture not in cls.__cachedLatest:
       cls.__cachedLatest[architecture] = cls._availableLatest(architecture)
     return cls.__cachedLatest[architecture].copy()
 
   ####################################################################
   @classmethod
-  def _cachedNightly(cls, architecture):
+  def _cachedNightly(cls, architecture = None):
     if cls.__cachedNightly is None:
       cls.__cachedNightly = {}
     if architecture is None:
-      architecture = Architecture.defaultChoice().name()
+      architecture = architectures.Architecture.defaultChoice().name()
     if architecture not in cls.__cachedNightly:
       cls.__cachedNightly[architecture] = cls._availableNightly(architecture)
     return cls.__cachedNightly[architecture].copy()
 
   ####################################################################
   @classmethod
-  def _cachedReleased(cls, architecture):
+  def _cachedReleased(cls, architecture = None):
     if cls.__cachedReleased is None:
       cls.__cachedReleased = {}
     if architecture is None:
-      architecture = Architecture.defaultChoice().name()
+      architecture = architectures.Architecture.defaultChoice().name()
     if architecture not in cls.__cachedReleased:
       cls.__cachedReleased[architecture] = cls._availableReleased(architecture)
     return cls.__cachedReleased[architecture].copy()
+
+  ####################################################################
+  @classmethod
+  def _categoryLatest(cls, architecture):
+    # What is returned must be suitable for use as a file name w/o special
+    # handling (e.g., requiring quoting).
+    return "latest"
+
+  ####################################################################
+  @classmethod
+  def _categoryNightly(cls, architecture):
+    # What is returned must be suitable for use as a file name w/o special
+    # handling (e.g., requiring quoting).
+    return "nightly"
+
+  ####################################################################
+  @classmethod
+  def _categoryReleased(cls, architecture):
+    # What is returned must be suitable for use as a file name w/o special
+    # handling (e.g., requiring quoting).
+    return "released"
+
+  ####################################################################
+  @classmethod
+  def _filterNonExistentArchitecture(cls, repos, architecture):
+    """Filters out the repos that don't have a subdir for the
+    specified archtecture returning only those that do.
+    """
+    raise NotImplementedError
+
+  ####################################################################
+  @classmethod
+  def _findAgnosticLatestRoots(cls, architecture):
+    raise NotImplementedError
+
+  ####################################################################
+  @classmethod
+  def _findAgnosticNightlyRoots(cls, architecture):
+    raise NotImplementedError
+
+  ####################################################################
+  @classmethod
+  def _findAgnosticReleasedRoots(cls, architecture):
+    raise NotImplementedError
 
   ####################################################################
   @classmethod
@@ -283,3 +385,112 @@ class Repository(object):
         cls.__cachedUriContents[uri] = ""
 
     return cls.__cachedUriContents[uri]
+
+  ####################################################################
+  # Private methods
+  ####################################################################
+  @classmethod
+  def __privateAgnosticFileName(cls, category):
+    return "agnostic.{0}.json".format(category)
+
+  ####################################################################
+  @classmethod
+  def __privateAvailableFileName(cls, category, architecture):
+    return "available.{0}.{1}.json".format(category, architecture)
+
+  ####################################################################
+  @classmethod
+  def __privateAgnosticRoots(cls, category, finder):
+    if cls.__agnosticRoots is None:
+      cls.__agnosticRoots = {}
+    if category not in cls.__agnosticRoots:
+      openFile = cls.__privateOpenFile(cls.__privateAgnosticFileName(category))
+      try:
+        roots = cls.__privateLoadFile(openFile)
+        if roots is None:
+          print("Updaating saved {0} {1} repos".format(cls.className(),
+                                                       category),
+                file = sys.stderr)
+          cls.__privateSaveFile(openFile, finder())
+          roots = cls.__privateLoadFile(openFile)
+        cls.__agnosticRoots[category] = roots
+      finally:
+        openFile.close()
+    return cls.__agnosticRoots[category]
+
+  ####################################################################
+  @classmethod
+  def __privateAvailableRoots(cls, category, architecture, finder):
+    openFile = cls.__privateOpenFile(
+                 cls.__privateAvailableFileName(category, architecture))
+    try:
+      with cls.__privateOpenFile(cls.__privateAgnosticFileName(category)) as f:
+        mtime = cls.__privateFileMtime(f)
+      roots = cls.__privateLoadFile(openFile, mtime)
+      if roots is None:
+        print("Updaating saved {0} {1} {2} repos ".format(cls.className(),
+                                                          category,
+                                                          architecture),
+              file = sys.stderr)
+        cls.__privateSaveFile(openFile, finder())
+        roots = cls.__privateLoadFile(openFile)
+    finally:
+      openFile.close()
+    return roots
+
+  ####################################################################
+  @classmethod
+  def __privateDirPath(cls):
+    return os.path.sep.join([os.environ["HOME"], ".python-infrastructure",
+                             "repos", cls.className()])
+
+  ####################################################################
+  @classmethod
+  def __privateLoadFile(cls, openFile, dependencyMtime = None):
+    roots = None
+    stats = os.fstat(openFile.fileno())
+    # Truncate the file if it's dependency is more recent than the file itself
+    # or it's been more than a day since it was updated.
+    if (((dependencyMtime is not None) and (dependencyMtime > stats.st_mtime))
+        or ((time.time() - stats.st_mtime) >= 86400)):
+      openFile.truncate()
+    elif stats.st_size > 0:
+      # Seek to zero in case this is a load after a save.
+      openFile.seek(0)
+      roots = json.loads(openFile.read())
+    return roots
+
+  ####################################################################
+  @classmethod
+  def __privateFileMtime(cls, openFile):
+    stats = os.fstat(openFile.fileno())
+    return stats.st_mtime
+
+  ####################################################################
+  @classmethod
+  def __privateOpenFile(cls, name):
+    try:
+      os.makedirs(cls.__privateDirPath(), 0o700)
+    except OSError as ex:
+      if ex.errno != errno.EEXIST:
+        raise
+    try:
+      fd = os.open(os.path.sep.join([cls.__privateDirPath(), name]),
+                   os.O_CREAT | os.O_RDWR | os.O_EXCL, 0o640)
+    except OSError as ex:
+      if ex.errno != errno.EEXIST:
+        raise
+      fd = os.open(os.path.sep.join([cls.__privateDirPath(), name]),
+                   os.O_RDWR | os.O_EXCL, 0o640)
+    try:
+      openFile = os.fdopen(fd, "r+")
+    except:
+      os.close(fd)
+    return openFile
+
+  ####################################################################
+  @classmethod
+  def __privateSaveFile(cls, openFile, roots):
+    openFile.write(json.dumps(roots))
+    openFile.flush()
+    os.fsync(openFile.fileno())

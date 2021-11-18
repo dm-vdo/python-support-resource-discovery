@@ -3,8 +3,8 @@ from __future__ import print_function
 import argparse
 import yaml
 
-from .submodules import architectures
-from .submodules import command
+import architectures
+import command
 from .CentOS import CentOS
 from .Fedora import Fedora
 from .RHEL import RHEL

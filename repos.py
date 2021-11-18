@@ -2,9 +2,10 @@
 
 from __future__ import print_function
 
+import command
 import repos
 
 #############################################################################
 #############################################################################
 if __name__ == "__main__":
-  repos.CommandShell(repos.ReposCommand).run()
+  command.CommandShell(repos.ReposCommand).run()
