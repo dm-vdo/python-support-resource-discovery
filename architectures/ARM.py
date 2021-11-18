@@ -1,4 +1,4 @@
-from ..Architecture import Architecture
+from .Architecture import Architecture
 
 ########################################################################
 class ARM(Architecture):
