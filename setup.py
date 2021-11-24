@@ -12,7 +12,7 @@ def prefixed(src):
 
 setuptools.setup(
   name = prefixed("repos"),
-  version = "1.0.6",
+  version = "1.0.7",
   description = prefixed("repos"),
   author = "Joe Shimkus",
   author_email = "jshimkus@redhat.com",
