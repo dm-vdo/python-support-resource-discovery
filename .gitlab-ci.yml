@@ -2,6 +2,10 @@ stages:
     - build
 
 build-repos:
+    # Only run on the master branch.
+    only:
+      - master
+
     stage: build
 
     variables:
