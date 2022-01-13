@@ -10,24 +10,26 @@ class CentOS(Repository):
   __CENTOS_MINIMUM_MAJOR = 8
   __CENTOS_MINIMUM_MINOR = 3
 
+  # Available via Factory.
+  _available = True
+
   ####################################################################
   # Overridden methods
   ####################################################################
-  @classmethod
-  def _beakerRoots(cls):
+  def _beakerRoots(self):
     roots = {}
-    major = cls.__CENTOS_MINIMUM_MAJOR - 1
+    major = self.__CENTOS_MINIMUM_MAJOR - 1
     while True:
       major += 1
-      minor = (-1 if major > cls.__CENTOS_MINIMUM_MAJOR
-                  else cls.__CENTOS_MINIMUM_MINOR - 1)
+      minor = (-1 if major > self.__CENTOS_MINIMUM_MAJOR
+                  else self.__CENTOS_MINIMUM_MINOR - 1)
       try:
         while True:
           minor += 1
           family = "CentOSLinux{0}".format(major)
           name = "CentOS-{0}.{1}".format(major, minor,)
           variant = "BaseOS"
-          root = cls._beakerRoot(family, name, variant)
+          root = self._beakerRoot(family, name, variant)
           if root is not None:
             roots["{0}.{1}".format(major, minor)] = root
 
@@ -40,70 +42,63 @@ class CentOS(Repository):
     return roots
 
   ####################################################################
-  @classmethod
-  def _filterNonExistentArchitecture(cls, repos, architecture):
+  def _filterNonExistentArchitecture(self, repos, architecture):
     regex = re.compile(r"(?i)<a\s+href=\"({0}/)\">\1</a>".format(architecture))
 
     return dict([ (key, value)
       for (key, value) in repos.items()
         if re.search(regex,
-                     cls._uri_contents(
+                     self._uri_contents(
                       "{0}/{1}".format(value, "BaseOS"))) is not None ])
 
   ####################################################################
-  @classmethod
-  def _findAgnosticLatestRoots(cls, architecture):
-    return cls._findAgnosticReleasedRoots(architecture)
+  def _findAgnosticLatestRoots(self, architecture):
+    return self._findAgnosticReleasedRoots(architecture)
 
   ####################################################################
-  @classmethod
-  def _findAgnosticNightlyRoots(cls, architecture):
-    return cls._findAgnosticReleasedRoots(architecture)
+  def _findAgnosticNightlyRoots(self, architecture):
+    return self._findAgnosticReleasedRoots(architecture)
 
   ####################################################################
-  @classmethod
-  def _findAgnosticReleasedRoots(cls, architecture):
+  def _findAgnosticReleasedRoots(self, architecture):
     # Try to get the released roots from beaker.  If beaker cannot be
     # reached get them from the web.
     roots = {}
     try:
-      roots = cls._beakerRoots()
+      roots = self._beakerRoots()
     except RepositoryBeakerNotFound:
-      path = cls._releasedStartingPath()
-      data = cls._path_contents("{0}/".format(path))
+      path = self._releasedStartingPath()
+      data = self._path_contents("{0}/".format(path))
 
       # Find all the released versions greater than or equal to the CentOS
       # minimum major and then find their minors.
       regex = r"(?i)<a\s+href=\"(centos-(\d+))/\">\1/</a>"
       for release in filter(
-                      lambda x: int(x[1]) >= cls.__CENTOS_MINIMUM_MAJOR,
+                      lambda x: int(x[1]) >= self.__CENTOS_MINIMUM_MAJOR,
                       re.findall(regex, data)):
-        roots.update(cls._availableReleasedMinors(
+        roots.update(self._availableReleasedMinors(
                         "{0}/centos-{1}".format(path, release[1]),
                         int(release[1])))
     return roots
 
   ####################################################################
-  @classmethod
-  def _host(cls):
+  def _host(self):
     return "download.eng.bos.redhat.com"
 
   ####################################################################
-  @classmethod
-  def _releasedStartingPath(cls, architecture = None):
+  def _releasedStartingPath(self, architecture = None):
     return "/released/CentOS"
 
   ####################################################################
   # Protected methods
   ####################################################################
-  @classmethod
-  def _availableReleasedMinors(cls, path, major):
-    data = cls._path_contents("{0}/".format(path))
+  def _availableReleasedMinors(self, path, major):
+    data = self._path_contents("{0}/".format(path))
 
     regex = r"(?i)<a\s+href=\"({0}\.(\d+)(|\.\d+))/\">\1/</a>".format(major)
     matches = re.findall(regex, data)
-    if major == cls.__CENTOS_MINIMUM_MAJOR:
-      matches = filter(lambda x: int(x[1]) >= cls.__CENTOS_MINIMUM_MINOR,
+    if major == self.__CENTOS_MINIMUM_MAJOR:
+      matches = filter(lambda x: int(x[1]) >= self.__CENTOS_MINIMUM_MINOR,
                        matches)
     # Convert the minor/zStream to integers.
     matches = [(x[0],
@@ -120,5 +115,5 @@ class CentOS(Repository):
           maxMatch = list(filter(lambda x: x[2] == maxZStream, minorMatches))
           maxMatch = maxMatch[0]
           available["{0}.{1}".format(major, maxMatch[1])] = (
-            "http://{0}{1}/{2}".format(cls._host(), path, maxMatch[0]))
+            "http://{0}{1}/{2}".format(self._host(), path, maxMatch[0]))
     return available
