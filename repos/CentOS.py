@@ -1,7 +1,6 @@
 import re
 
-from .Repository import (Repository, RepositoryBeakerNoDistroTree,
-                         RepositoryBeakerNotFound)
+from .Repository import Repository
 
 ######################################################################
 ######################################################################
@@ -15,32 +14,6 @@ class CentOS(Repository):
 
   ####################################################################
   # Overridden methods
-  ####################################################################
-  def _beakerRoots(self):
-    roots = {}
-    major = self.__CENTOS_MINIMUM_MAJOR - 1
-    while True:
-      major += 1
-      minor = (-1 if major > self.__CENTOS_MINIMUM_MAJOR
-                  else self.__CENTOS_MINIMUM_MINOR - 1)
-      try:
-        while True:
-          minor += 1
-          family = "CentOSLinux{0}".format(major)
-          name = "CentOS-{0}.{1}".format(major, minor,)
-          variant = "BaseOS"
-          root = self._beakerRoot(family, name, variant)
-          if root is not None:
-            roots["{0}.{1}".format(major, minor)] = root
-
-      except RepositoryBeakerNoDistroTree:
-        # If minor is zero we've exhausted the majors and are done.
-        # If it's not we only know we've exhausted the current major.
-        if minor == 0:
-          break
-
-    return roots
-
   ####################################################################
   def _filterNonExistentArchitecture(self, repos, architecture):
     regex = re.compile(r"(?i)<a\s+href=\"({0}/)\">\1</a>".format(architecture))
@@ -61,24 +34,19 @@ class CentOS(Repository):
 
   ####################################################################
   def _findAgnosticReleasedRoots(self, architecture):
-    # Try to get the released roots from beaker.  If beaker cannot be
-    # reached get them from the web.
     roots = {}
-    try:
-      roots = self._beakerRoots()
-    except RepositoryBeakerNotFound:
-      path = self._releasedStartingPath()
-      data = self._path_contents("{0}/".format(path))
+    path = self._releasedStartingPath()
+    data = self._path_contents("{0}/".format(path))
 
-      # Find all the released versions greater than or equal to the CentOS
-      # minimum major and then find their minors.
-      regex = r"(?i)<a\s+href=\"(centos-(\d+))/\">\1/</a>"
-      for release in filter(
-                      lambda x: int(x[1]) >= self.__CENTOS_MINIMUM_MAJOR,
-                      re.findall(regex, data)):
-        roots.update(self._availableReleasedMinors(
-                        "{0}/centos-{1}".format(path, release[1]),
-                        int(release[1])))
+    # Find all the released versions greater than or equal to the CentOS
+    # minimum major and then find their minors.
+    regex = r"(?i)<a\s+href=\"(centos-(\d+))/\">\1/</a>"
+    for release in filter(
+                    lambda x: int(x[1]) >= self.__CENTOS_MINIMUM_MAJOR,
+                    re.findall(regex, data)):
+      roots.update(self._availableReleasedMinors(
+                      "{0}/centos-{1}".format(path, release[1]),
+                      int(release[1])))
     return roots
 
   ####################################################################

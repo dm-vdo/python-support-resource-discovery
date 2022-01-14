@@ -2,8 +2,7 @@ import json
 import re
 
 import architectures
-from .Repository import (Repository, RepositoryBeakerNoDistroTree,
-                         RepositoryBeakerNotFound)
+from .Repository import Repository
 
 ######################################################################
 ######################################################################
@@ -16,25 +15,6 @@ class Fedora(Repository):
 
   ####################################################################
   # Overridden methods
-  ####################################################################
-  def _beakerRoots(self):
-    roots = {}
-    major = self.__FEDORA_MINIMUM_MAJOR - 1
-    while True:
-      major += 1
-      try:
-        family = "Fedora{0}".format(major)
-        name = "Fedora-{0}".format(major)
-        variant = "Server" if major < 31 else "Everything"
-        root = self._beakerRoot(family, name, variant)
-        if root is not None:
-          roots["{0}".format(major)] = root
-
-      except RepositoryBeakerNoDistroTree:
-        break
-
-    return roots
-
   ####################################################################
   def _categoryLatest(self, architecture):
     return self._latestStartingPath(architecture).replace("/", "-")
@@ -89,26 +69,17 @@ class Fedora(Repository):
   # Protected methods
   ####################################################################
   def _agnosticCommon(self, path):
-    # Try to get the released roots from beaker.  If beaker cannot be
-    # reached get them from the web.
-    roots = None
-    if path.endswith("/releases"):
-      try:
-        roots = self._beakerRoots()
-      except RepositoryBeakerNotFound:
-        pass
+    roots = {}
+    data = self._path_contents("{0}/".format(path))
 
-    if roots is None:
-      data = self._path_contents("{0}/".format(path))
-
-      # Find all the released versions greater than or equal to the Fedora
-      # minimum major (limited to no less than 28, Fedora 28 being the
-      # version first incorporating VDO).
-      regex = r"(?i)<a\s+href=\"(\d+)/\">\1/</a>"
-      roots = dict([
-        (x,  self._availableUri(path, x))
-          for x in filter(lambda x: int(x) >= self.__FEDORA_MINIMUM_MAJOR,
-                          re.findall(regex, data)) ])
+    # Find all the released versions greater than or equal to the Fedora
+    # minimum major (limited to no less than 28, Fedora 28 being the
+    # version first incorporating VDO).
+    regex = r"(?i)<a\s+href=\"(\d+)/\">\1/</a>"
+    roots = dict([
+      (x,  self._availableUri(path, x))
+        for x in filter(lambda x: int(x) >= self.__FEDORA_MINIMUM_MAJOR,
+                        re.findall(regex, data)) ])
 
     return roots
 

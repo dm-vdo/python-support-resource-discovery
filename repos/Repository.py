@@ -26,52 +26,6 @@ import factory
 
 ######################################################################
 ######################################################################
-class RepositoryException(Exception):
-
-  ####################################################################
-  # Public methods
-  ####################################################################
-
-  ####################################################################
-  # Overridden methods
-  ####################################################################
-  def __init__(self, msg, *args, **kwargs):
-    super(RepositoryException, self).__init__(*args, **kwargs)
-    self._msg = msg
-
-  ######################################################################
-  def __str__(self):
-    return self._msg
-
-  ####################################################################
-  # Protected methods
-  ####################################################################
-
-######################################################################
-######################################################################
-class RepositoryBeakerNoDistroTree(RepositoryException):
-
-  ####################################################################
-  # Overridden methods
-  ####################################################################
-  def __init__(self, family, *args, **kwargs):
-    super(RepositoryBeakerNoDistroTree, self).__init__(
-      "beaker has no distro tree for family: {0}".format(family),
-      *args, **kwargs)
-
-######################################################################
-######################################################################
-class RepositoryBeakerNotFound(RepositoryException):
-
-  ####################################################################
-  # Overridden methods
-  ####################################################################
-  def __init__(self, *args, **kwargs):
-    super(RepositoryBeakerNotFound, self).__init__("beaker command not found",
-                                                  *args, **kwargs)
-
-######################################################################
-######################################################################
 class Repository(factory.Factory):
   # We cache the results of determining the various roots to avoid
   # having to constantly perform network queries.
@@ -186,72 +140,6 @@ class Repository(factory.Factory):
                                           self. _filterNonExistentArchitecture,
                                           self._agnosticReleased(architecture),
                                           architecture))
-
-  ####################################################################
-  def _beakerRoot(self, family, name, variant):
-    beaker = None
-    command = ["bkr", "distro-trees-list", "--family", family,
-               "--name", name, "--format", "json"]
-    try:
-      # Use universal_newlines to force python3 to return strings.
-      beaker = subprocess.Popen(command, stdout = subprocess.PIPE,
-                                universal_newlines = True)
-    except OSError as ex:
-      if ex.errno != errno.ENOENT:
-        raise
-      raise RepositoryBeakerNotFound
-
-    (stdout, _) = beaker.communicate()
-    if beaker.returncode != 0:
-      if beaker.returncode == 1:
-        raise RepositoryBeakerNoDistroTree(family)
-      raise RepositoryException(
-              "beaker unexpected failure; return code = {0}".format(
-                                                          beaker.returncode))
-
-    distros = list(filter(lambda x: x["variant"] == variant,
-                          json.loads(stdout)))
-
-    # Preferentially use http links from Boston beaker controller.
-    available = []
-    for entry in distros:
-      available = list(filter(lambda x: x[0].endswith("bos.redhat.com")
-                                          and x[1].startswith("http"),
-                              entry["available"]))
-      available = [ x[1].rsplit("/{0}/{1}/os".format(variant,
-                                                     entry["arch"]), 1)[0]
-                    for x in available]
-      if len(available) > 0:
-        break
-
-    # If not Boston try RDU.
-    if len(available) == 0:
-      for entry in distros:
-        available = list(filter(lambda x: x[0].endswith("rdu.redhat.com")
-                                            and x[1].startswith("http"),
-                                entry["available"]))
-        available = [ x[1].rsplit("/{0}/{1}/os".format(variant,
-                                                       entry["arch"]), 1)[0]
-                      for x in available]
-        if len(available) > 0:
-          break
-
-    # If not Boston nor RDU take whatever we can get.
-    if len(available) == 0:
-      for entry in distros:
-        available = list(filter(lambda x: x[1].startswith("http"),
-                                entry["available"]))
-        available = [ x[1].rsplit("/{0}/{1}/os".format(variant,
-                                                       entry["arch"]), 1)[0]
-                      for x in available]
-        if len(available) > 0:
-          break
-
-    return None if len(available) == 0 else available[0]
-
-  ####################################################################
-  def _beakerRoots(self):
-    raise NotImplementedError
 
   ####################################################################
   def _cachedLatest(self, architecture = None):
