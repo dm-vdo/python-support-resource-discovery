@@ -5,9 +5,7 @@ import yaml
 
 import architectures
 import command
-from .CentOS import CentOS
-from .Fedora import Fedora
-from .RHEL import RHEL
+from .Repository import Repository
 
 ########################################################################
 class ReposCommand(command.Command):
@@ -28,6 +26,16 @@ class ReposCommand(command.Command):
   @classmethod
   def parserParents(cls):
     parser = argparse.ArgumentParser(add_help = False)
+
+    parser.add_argument("--force-scan",
+                        help = "force a scan for available repos" \
+                                "; by default scan results are cached and" \
+                                " updated when at least one day has passed" \
+                                " since the last scan" \
+                                "; specifying this option will force a scan" \
+                                " for available repos",
+                        action = "store_true",
+                        dest = "forceScan")
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--latest",
@@ -50,47 +58,26 @@ class ReposCommand(command.Command):
   def run(self):
     all = not (self.args.latest or self.args.nightly or self.args.released)
 
-    for architecture in architectures.Architecture.choices():
-      if all or self.args.released:
-        print("CentOS {0} released roots:".format(architecture.name()))
-        print(yaml.safe_dump(CentOS.availableRoots(architecture.name()),
-                             default_flow_style = False))
-      if all or self.args.latest:
-        print("CentOS {0} latest roots:".format(architecture.name()))
-        print(yaml.safe_dump(CentOS.availableLatestRoots(architecture.name()),
-                             default_flow_style = False))
-      if all or self.args.nightly:
-        print("CentOS {0} nightly roots:".format(architecture.name()))
-        print(yaml.safe_dump(CentOS.availableNightlyRoots(architecture.name()),
-                             default_flow_style = False))
+    instanceArgs = argparse.Namespace(forceScan = self.args.forceScan)
 
-    for architecture in architectures.Architecture.choices():
-      if all or self.args.released:
-        print("Fedora {0} released roots:".format(architecture.name()))
-        print(yaml.safe_dump(Fedora.availableRoots(architecture.name()),
-                             default_flow_style = False))
-      if all or self.args.latest:
-        print("Fedora {0} latest roots:".format(architecture.name()))
-        print(yaml.safe_dump(Fedora.availableLatestRoots(architecture.name()),
-                             default_flow_style = False))
-      if all or self.args.nightly:
-        print("Fedora {0} nightly roots:".format(architecture.name()))
-        print(yaml.safe_dump(Fedora.availableNightlyRoots(architecture.name()),
-                             default_flow_style = False))
-
-    for architecture in architectures.Architecture.choices():
-      if all or self.args.released:
-        print("RHEL {0} released roots:".format(architecture.name()))
-        print(yaml.safe_dump(RHEL.availableRoots(architecture.name()),
-                             default_flow_style = False))
-      if all or self.args.latest:
-        print("RHEL {0} latest roots:".format(architecture.name()))
-        print(yaml.safe_dump(RHEL.availableLatestRoots(architecture.name()),
-                             default_flow_style = False))
-      if all or self.args.nightly:
-        print("RHEL {0} nightly roots:".format(architecture.name()))
-        print(yaml.safe_dump(RHEL.availableNightlyRoots(architecture.name()),
-                             default_flow_style = False))
+    for choice in Repository.choices():
+      instance = Repository.makeItem(choice.name(), instanceArgs)
+      for architecture in architectures.Architecture.choices():
+        if all or self.args.released:
+          print("{0} {1} released roots:".format(instance.name(),
+                                                 architecture.name()))
+          print(yaml.safe_dump(instance.availableRoots(architecture.name()),
+                               default_flow_style = False))
+        if all or self.args.latest:
+          print("{0} {1} latest roots:".format(instance.name(),
+                                               architecture.name()))
+          print(yaml.safe_dump(instance.availableLatestRoots(architecture.name()),
+                               default_flow_style = False))
+        if all or self.args.nightly:
+          print("{0} {1} nightly roots:".format(instance.name(),
+                                                architecture.name()))
+          print(yaml.safe_dump(instance.availableNightlyRoots(architecture.name()),
+                               default_flow_style = False))
 
   ####################################################################
   # Protected factory-behavior methods

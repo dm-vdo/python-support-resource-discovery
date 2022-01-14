@@ -10,17 +10,19 @@ class RHEL(Repository):
   __RHEL_MINIMUM_MAJOR = 7
   __RHEL_MINIMUM_MINOR = 5
 
+  # Available via Factory.
+  _available = True
+
   ####################################################################
   # Overridden methods
   ####################################################################
-  @classmethod
-  def _beakerRoots(cls):
+  def _beakerRoots(self):
     roots = {}
-    major = cls.__RHEL_MINIMUM_MAJOR - 1
+    major = self.__RHEL_MINIMUM_MAJOR - 1
     while True:
       major += 1
-      minor = (-1 if major > cls.__RHEL_MINIMUM_MAJOR
-                  else cls.__RHEL_MINIMUM_MINOR - 1)
+      minor = (-1 if major > self.__RHEL_MINIMUM_MAJOR
+                  else self.__RHEL_MINIMUM_MINOR - 1)
       try:
         while True:
           minor += 1
@@ -28,7 +30,7 @@ class RHEL(Repository):
           name = "RHEL-{0}.{1}{2}".format(major, minor,
                                           "" if major < 8 else ".0")
           variant = "Server" if major < 8 else "BaseOS"
-          root = cls._beakerRoot(family, name, variant)
+          root = self._beakerRoot(family, name, variant)
           if root is not None:
             roots["{0}.{1}".format(major, minor)] = root
 
@@ -41,95 +43,86 @@ class RHEL(Repository):
     return roots
 
   ####################################################################
-  @classmethod
-  def _filterNonExistentArchitecture(cls, repos, architecture):
+  def _filterNonExistentArchitecture(self, repos, architecture):
     regex = re.compile(r"(?i)<a\s+href=\"({0}/)\">\1</a>".format(architecture))
 
     return dict([ (key, value)
       for (key, value) in repos.items()
         if re.search(regex,
-                     cls._uri_contents(
+                     self._uri_contents(
                       "{0}/{1}".format(value,
                                        "Server" if float(key) < 8
                                                 else "BaseOS"))) is not None ])
 
   ####################################################################
-  @classmethod
-  def _findAgnosticLatestRoots(cls, architecture):
+  def _findAgnosticLatestRoots(self, architecture):
     # Find all the latest versions greater than or equal to the RHEL
     # minimum major and then find their minors.
     roots = {}
-    path = cls._latestStartingPath()
+    path = self._latestStartingPath()
 
-    for rhel in cls._findMajorRhels(path,
+    for rhel in self._findMajorRhels(path,
                                     r"<a\s+href=\"(rhel-(\d+))/\">\1/</a>"):
-      roots.update(cls._availableLatestMinors(
+      roots.update(self._availableLatestMinors(
               "{0}/{1}/rel-eng/{2}".format(path, rhel[0], rhel[0].upper())))
     return roots
 
   ####################################################################
-  @classmethod
-  def _findAgnosticNightlyRoots(cls, architecture):
+  def _findAgnosticNightlyRoots(self, architecture):
     # Find all the nightly versions greater than or equal to the RHEL
     # minimum major and then find their minors.
     roots = {}
-    path = cls._nightlyStartingPath()
+    path = self._nightlyStartingPath()
 
-    for rhel in cls._findMajorRhels(path,
+    for rhel in self._findMajorRhels(path,
                                     r"<a\s+href=\"(rhel-(\d+))/\">\1/</a>"):
-      roots.update(cls._availableNightlyMinors(
+      roots.update(self._availableNightlyMinors(
               "{0}/{1}/nightly/{2}".format(path, rhel[0], rhel[0].upper())))
     return roots
 
   ####################################################################
-  @classmethod
-  def _findAgnosticReleasedRoots(cls, architecture):
+  def _findAgnosticReleasedRoots(self, architecture):
     # Try to get the released roots from beaker.  If beaker cannot be
     # reached get them from the web.
     roots = {}
     try:
-      roots = cls._beakerRoots()
+      roots = self._beakerRoots()
     except RepositoryBeakerNotFound:
       # Find all the released versions greater than or equal to the RHEL
       # minimum major and then find their minors.
-      path = cls._releasedStartingPath()
-      for rhel in cls._findMajorRhels(
+      path = self._releasedStartingPath()
+      for rhel in self._findMajorRhels(
                               path, r"<a\s+href=\"(RHEL-(\d+))/\">\1/</a>"):
-        roots.update(cls._availableReleasedMinors(
+        roots.update(self._availableReleasedMinors(
                         "{0}/{1}".format(path, rhel[0]), int(rhel[1])))
 
     return roots
 
   ####################################################################
-  @classmethod
-  def _host(cls):
+  def _host(self):
     return "download.eng.bos.redhat.com"
 
   ####################################################################
-  @classmethod
-  def _latestStartingPath(cls, architecture = None):
+  def _latestStartingPath(self, architecture = None):
     return ""
 
   ####################################################################
-  @classmethod
-  def _nightlyStartingPath(cls, architecture = None):
+  def _nightlyStartingPath(self, architecture = None):
     return ""
 
   ####################################################################
-  @classmethod
-  def _releasedStartingPath(cls, architecture = None):
+  def _releasedStartingPath(self, architecture = None):
     return "/released"
 
   ####################################################################
   # Protected methods
   ####################################################################
-  @classmethod
-  def _availableLatestMinors(cls, path):
-    data = cls._path_contents("{0}/".format(path))
+  def _availableLatestMinors(self, path):
+    data = self._path_contents("{0}/".format(path))
 
     # Find all the latest greater than or equal to the RHEL minimum major.
     regex = r"(?i)<a\s+href=\"(latest-RHEL-(\d+)\.(\d+)(|\.\d+))/\">\1/</a>"
-    matches = filter(lambda x: int(x[1]) >= cls.__RHEL_MINIMUM_MAJOR,
+    matches = filter(lambda x: int(x[1]) >= self.__RHEL_MINIMUM_MAJOR,
                      re.findall(regex, data))
     # Convert the major/minor/zStream to integers.
     matches = [(x[0],
@@ -138,8 +131,8 @@ class RHEL(Repository):
                 int(x[3].lstrip(".")) if x[3] != "" else 0) for x in matches]
     # Exclude any minimum major versions that have a minor less than the
     # minimum minor.
-    matches = filter(lambda x: not ((x[1] == cls.__RHEL_MINIMUM_MAJOR)
-                                    and (x[2] < cls.__RHEL_MINIMUM_MINOR)),
+    matches = filter(lambda x: not ((x[1] == self.__RHEL_MINIMUM_MAJOR)
+                                    and (x[2] < self.__RHEL_MINIMUM_MINOR)),
                      matches)
     matches = list(matches)
 
@@ -158,25 +151,23 @@ class RHEL(Repository):
                                      minorMatches))
               maxMatch = maxMatch[0]
               available["{0}.{1}".format(maxMatch[1], maxMatch[2])] = (
-                "http://{0}{1}/{2}/compose".format(cls._host(), path,
+                "http://{0}{1}/{2}/compose".format(self._host(), path,
                                                    maxMatch[0]))
 
     return available
 
   ####################################################################
-  @classmethod
-  def _availableNightlyMinors(cls, path):
-    return cls._availableLatestMinors(path)
+  def _availableNightlyMinors(self, path):
+    return self._availableLatestMinors(path)
 
   ####################################################################
-  @classmethod
-  def _availableReleasedMinors(cls, path, major):
-    data = cls._path_contents("{0}/".format(path))
+  def _availableReleasedMinors(self, path, major):
+    data = self._path_contents("{0}/".format(path))
 
     regex = r"<a\s+href=\"({0}\.(\d+)(|\.\d+))/\">\1/</a>".format(major)
     matches = re.findall(regex, data)
-    if major == cls.__RHEL_MINIMUM_MAJOR:
-      matches = filter(lambda x: int(x[1]) >= cls.__RHEL_MINIMUM_MINOR,
+    if major == self.__RHEL_MINIMUM_MAJOR:
+      matches = filter(lambda x: int(x[1]) >= self.__RHEL_MINIMUM_MINOR,
                        matches)
     # Convert the minor/zStream to integers.
     matches = [(x[0],
@@ -193,15 +184,14 @@ class RHEL(Repository):
           maxMatch = list(filter(lambda x: x[2] == maxZStream, minorMatches))
           maxMatch = maxMatch[0]
           available["{0}.{1}".format(major, maxMatch[1])] = (
-            "http://{0}{1}/{2}".format(cls._host(), path, maxMatch[0]))
+            "http://{0}{1}/{2}".format(self._host(), path, maxMatch[0]))
     return available
 
   ####################################################################
-  @classmethod
-  def _findMajorRhels(cls, path, regex):
-    data = cls._path_contents("{0}/".format(path))
+  def _findMajorRhels(self, path, regex):
+    data = self._path_contents("{0}/".format(path))
 
     # Find all the released versions greater than or equal to the RHEL
     # minimum major.
-    return filter(lambda x: int(x[1]) >= cls.__RHEL_MINIMUM_MAJOR,
+    return filter(lambda x: int(x[1]) >= self.__RHEL_MINIMUM_MAJOR,
                   re.findall(regex, data))
