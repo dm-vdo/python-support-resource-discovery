@@ -22,6 +22,7 @@ import sys
 import time
 
 import architectures
+import defaults
 import factory
 
 ######################################################################
@@ -44,6 +45,9 @@ class Repository(factory.Factory):
 
   # Cached contents to avoid multiple requests for the same data.
   __cachedUriContents = {}
+
+  # Dictionary of defaults.
+  __defaults = None
 
   ####################################################################
   # Public methods
@@ -93,6 +97,16 @@ class Repository(factory.Factory):
 
   ####################################################################
   # Protected methods
+  ####################################################################
+  @classmethod
+  def _defaults(cls):
+    if cls.__defaults is None:
+      cls.__defaults = defaults.Defaults(os.path.join(
+                                  os.path.dirname(
+                                    os.path.realpath(__file__)),
+                                  "defaults.yml"))
+    return cls.__defaults
+
   ####################################################################
   def _agnosticLatest(self, architecture):
     return self.__privateAgnosticRoots(self._categoryLatest(architecture),
@@ -215,25 +229,50 @@ class Repository(factory.Factory):
 
   ####################################################################
   def _host(self):
-    raise NotImplementedError
+    return self._releasedHost()
 
   ####################################################################
   def _latestStartingPath(self, architecture = None):
-    return self._releasedStartingPath(architecture)
+    path = self._defaults().content([self.name().lower(), "paths", "latest"])
+    if path is not None:
+      path = "{0}{1}".format(self._startingPathPrefix(architecture), path)
+    else:
+      path = self._releasedStartingPath(architecture)
+    return path
 
   ####################################################################
   def _nightlyStartingPath(self, architecture = None):
-    return self._releasedStartingPath(architecture)
+    path = self._defaults().content([self.name().lower(), "paths", "nightly"])
+    if path is not None:
+      path = "{0}{1}".format(self._startingPathPrefix(architecture), path)
+    else:
+      path = self._latestStartingPath(architecture)
+    return path
+
+  ####################################################################
+  def _releasedHost(self):
+    host = self._defaults().content([self.name().lower(), "hosts", "released"])
+    return host
 
   ####################################################################
   def _releasedStartingPath(self, architecture = None):
-    raise NotImplementedError
+    path = self._defaults().content([self.name().lower(), "paths", "released"])
+    if path is not None:
+      path = "{0}{1}".format(self._startingPathPrefix(architecture), path)
+    return path
 
   ####################################################################
   def _path_contents(self, path = None):
+    contents = ""
     if path is None:
       path = self._releasedStartingPath()
-    return self._uri_contents("http://{0}{1}".format(self._host(), path))
+    if (path is not None) and (self._host() is not None):
+      contents = self._uri_contents("http://{0}{1}".format(self._host(), path))
+    return contents
+
+  ####################################################################
+  def _startingPathPrefix(self, architecture):
+    return ""
 
   ####################################################################
   def _uri_contents(self, uri, retries = 3):

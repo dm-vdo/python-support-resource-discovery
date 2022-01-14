@@ -36,26 +36,19 @@ class CentOS(Repository):
   def _findAgnosticReleasedRoots(self, architecture):
     roots = {}
     path = self._releasedStartingPath()
-    data = self._path_contents("{0}/".format(path))
+    if path is not None:
+      data = self._path_contents("{0}/".format(path))
 
-    # Find all the released versions greater than or equal to the CentOS
-    # minimum major and then find their minors.
-    regex = r"(?i)<a\s+href=\"(centos-(\d+))/\">\1/</a>"
-    for release in filter(
-                    lambda x: int(x[1]) >= self.__CENTOS_MINIMUM_MAJOR,
-                    re.findall(regex, data)):
-      roots.update(self._availableReleasedMinors(
-                      "{0}/centos-{1}".format(path, release[1]),
-                      int(release[1])))
+      # Find all the released versions greater than or equal to the CentOS
+      # minimum major and then find their minors.
+      regex = r"(?i)<a\s+href=\"(centos-(\d+))/\">\1/</a>"
+      for release in filter(
+                      lambda x: int(x[1]) >= self.__CENTOS_MINIMUM_MAJOR,
+                      re.findall(regex, data)):
+        roots.update(self._availableReleasedMinors(
+                        "{0}/centos-{1}".format(path, release[1]),
+                        int(release[1])))
     return roots
-
-  ####################################################################
-  def _host(self):
-    return "download.eng.bos.redhat.com"
-
-  ####################################################################
-  def _releasedStartingPath(self, architecture = None):
-    return "/released/CentOS"
 
   ####################################################################
   # Protected methods

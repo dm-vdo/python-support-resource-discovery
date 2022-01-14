@@ -32,11 +32,11 @@ class RHEL(Repository):
     # minimum major and then find their minors.
     roots = {}
     path = self._latestStartingPath()
-
-    for rhel in self._findMajorRhels(path,
-                                    r"<a\s+href=\"(rhel-(\d+))/\">\1/</a>"):
-      roots.update(self._availableLatestMinors(
-              "{0}/{1}/rel-eng/{2}".format(path, rhel[0], rhel[0].upper())))
+    if path is not None:
+      for rhel in self._findMajorRhels(path,
+                                      r"<a\s+href=\"(rhel-(\d+))/\">\1/</a>"):
+        roots.update(self._availableLatestMinors(
+                "{0}/{1}/rel-eng/{2}".format(path, rhel[0], rhel[0].upper())))
     return roots
 
   ####################################################################
@@ -45,11 +45,11 @@ class RHEL(Repository):
     # minimum major and then find their minors.
     roots = {}
     path = self._nightlyStartingPath()
-
-    for rhel in self._findMajorRhels(path,
-                                    r"<a\s+href=\"(rhel-(\d+))/\">\1/</a>"):
-      roots.update(self._availableNightlyMinors(
-              "{0}/{1}/nightly/{2}".format(path, rhel[0], rhel[0].upper())))
+    if path is not None:
+      for rhel in self._findMajorRhels(path,
+                                      r"<a\s+href=\"(rhel-(\d+))/\">\1/</a>"):
+        roots.update(self._availableNightlyMinors(
+                "{0}/{1}/nightly/{2}".format(path, rhel[0], rhel[0].upper())))
     return roots
 
   ####################################################################
@@ -58,28 +58,12 @@ class RHEL(Repository):
     # Find all the released versions greater than or equal to the RHEL
     # minimum major and then find their minors.
     path = self._releasedStartingPath()
-    for rhel in self._findMajorRhels(
-                            path, r"<a\s+href=\"(RHEL-(\d+))/\">\1/</a>"):
-      roots.update(self._availableReleasedMinors(
-                      "{0}/{1}".format(path, rhel[0]), int(rhel[1])))
-
+    if path is not None:
+      for rhel in self._findMajorRhels(
+                              path, r"<a\s+href=\"(RHEL-(\d+))/\">\1/</a>"):
+        roots.update(self._availableReleasedMinors(
+                        "{0}/{1}".format(path, rhel[0]), int(rhel[1])))
     return roots
-
-  ####################################################################
-  def _host(self):
-    return "download.eng.bos.redhat.com"
-
-  ####################################################################
-  def _latestStartingPath(self, architecture = None):
-    return ""
-
-  ####################################################################
-  def _nightlyStartingPath(self, architecture = None):
-    return ""
-
-  ####################################################################
-  def _releasedStartingPath(self, architecture = None):
-    return "/released"
 
   ####################################################################
   # Protected methods

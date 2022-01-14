@@ -20,14 +20,16 @@ def versioned(src):
 
 setuptools.setup(
   name = prefixed("repos"),
-  version = "2.0.0",
+  version = "2.0.1",
   description = prefixed("repos"),
   author = "Joe Shimkus",
   author_email = "jshimkus@redhat.com",
   packages = setuptools.find_packages(exclude = []),
+  package_data = { "repos" : ["defaults.yml"] },
   entry_points = {
     "console_scripts" :
       "{0} = repos:repos".format(versioned("repos"))
   },
-  install_requires = [prefixed("architectures"), prefixed("command")]
+  install_requires = [prefixed("architectures"), prefixed("command"),
+                      prefixed("defaults")]
 )
