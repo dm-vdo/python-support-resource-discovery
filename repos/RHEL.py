@@ -1,7 +1,6 @@
 import re
 
-from .Repository import (Repository, RepositoryBeakerNoDistroTree,
-                         RepositoryBeakerNotFound)
+from .Repository import Repository
 
 ######################################################################
 ######################################################################
@@ -15,33 +14,6 @@ class RHEL(Repository):
 
   ####################################################################
   # Overridden methods
-  ####################################################################
-  def _beakerRoots(self):
-    roots = {}
-    major = self.__RHEL_MINIMUM_MAJOR - 1
-    while True:
-      major += 1
-      minor = (-1 if major > self.__RHEL_MINIMUM_MAJOR
-                  else self.__RHEL_MINIMUM_MINOR - 1)
-      try:
-        while True:
-          minor += 1
-          family = "RedHatEnterpriseLinux{0}".format(major)
-          name = "RHEL-{0}.{1}{2}".format(major, minor,
-                                          "" if major < 8 else ".0")
-          variant = "Server" if major < 8 else "BaseOS"
-          root = self._beakerRoot(family, name, variant)
-          if root is not None:
-            roots["{0}.{1}".format(major, minor)] = root
-
-      except RepositoryBeakerNoDistroTree:
-        # If minor is zero we've exhausted the majors and are done.
-        # If it's not we only know we've exhausted the current major.
-        if minor == 0:
-          break
-
-    return roots
-
   ####################################################################
   def _filterNonExistentArchitecture(self, repos, architecture):
     regex = re.compile(r"(?i)<a\s+href=\"({0}/)\">\1</a>".format(architecture))
@@ -60,11 +32,11 @@ class RHEL(Repository):
     # minimum major and then find their minors.
     roots = {}
     path = self._latestStartingPath()
-
-    for rhel in self._findMajorRhels(path,
-                                    r"<a\s+href=\"(rhel-(\d+))/\">\1/</a>"):
-      roots.update(self._availableLatestMinors(
-              "{0}/{1}/rel-eng/{2}".format(path, rhel[0], rhel[0].upper())))
+    if path is not None:
+      for rhel in self._findMajorRhels(path,
+                                      r"<a\s+href=\"(rhel-(\d+))/\">\1/</a>"):
+        roots.update(self._availableLatestMinors(
+                "{0}/{1}/rel-eng/{2}".format(path, rhel[0], rhel[0].upper())))
     return roots
 
   ####################################################################
@@ -73,46 +45,25 @@ class RHEL(Repository):
     # minimum major and then find their minors.
     roots = {}
     path = self._nightlyStartingPath()
-
-    for rhel in self._findMajorRhels(path,
-                                    r"<a\s+href=\"(rhel-(\d+))/\">\1/</a>"):
-      roots.update(self._availableNightlyMinors(
-              "{0}/{1}/nightly/{2}".format(path, rhel[0], rhel[0].upper())))
+    if path is not None:
+      for rhel in self._findMajorRhels(path,
+                                      r"<a\s+href=\"(rhel-(\d+))/\">\1/</a>"):
+        roots.update(self._availableNightlyMinors(
+                "{0}/{1}/nightly/{2}".format(path, rhel[0], rhel[0].upper())))
     return roots
 
   ####################################################################
   def _findAgnosticReleasedRoots(self, architecture):
-    # Try to get the released roots from beaker.  If beaker cannot be
-    # reached get them from the web.
     roots = {}
-    try:
-      roots = self._beakerRoots()
-    except RepositoryBeakerNotFound:
-      # Find all the released versions greater than or equal to the RHEL
-      # minimum major and then find their minors.
-      path = self._releasedStartingPath()
+    # Find all the released versions greater than or equal to the RHEL
+    # minimum major and then find their minors.
+    path = self._releasedStartingPath()
+    if path is not None:
       for rhel in self._findMajorRhels(
                               path, r"<a\s+href=\"(RHEL-(\d+))/\">\1/</a>"):
         roots.update(self._availableReleasedMinors(
                         "{0}/{1}".format(path, rhel[0]), int(rhel[1])))
-
     return roots
-
-  ####################################################################
-  def _host(self):
-    return "download.eng.bos.redhat.com"
-
-  ####################################################################
-  def _latestStartingPath(self, architecture = None):
-    return ""
-
-  ####################################################################
-  def _nightlyStartingPath(self, architecture = None):
-    return ""
-
-  ####################################################################
-  def _releasedStartingPath(self, architecture = None):
-    return "/released"
 
   ####################################################################
   # Protected methods

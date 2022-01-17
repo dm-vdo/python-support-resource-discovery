@@ -22,53 +22,8 @@ import sys
 import time
 
 import architectures
+import defaults
 import factory
-
-######################################################################
-######################################################################
-class RepositoryException(Exception):
-
-  ####################################################################
-  # Public methods
-  ####################################################################
-
-  ####################################################################
-  # Overridden methods
-  ####################################################################
-  def __init__(self, msg, *args, **kwargs):
-    super(RepositoryException, self).__init__(*args, **kwargs)
-    self._msg = msg
-
-  ######################################################################
-  def __str__(self):
-    return self._msg
-
-  ####################################################################
-  # Protected methods
-  ####################################################################
-
-######################################################################
-######################################################################
-class RepositoryBeakerNoDistroTree(RepositoryException):
-
-  ####################################################################
-  # Overridden methods
-  ####################################################################
-  def __init__(self, family, *args, **kwargs):
-    super(RepositoryBeakerNoDistroTree, self).__init__(
-      "beaker has no distro tree for family: {0}".format(family),
-      *args, **kwargs)
-
-######################################################################
-######################################################################
-class RepositoryBeakerNotFound(RepositoryException):
-
-  ####################################################################
-  # Overridden methods
-  ####################################################################
-  def __init__(self, *args, **kwargs):
-    super(RepositoryBeakerNotFound, self).__init__("beaker command not found",
-                                                  *args, **kwargs)
 
 ######################################################################
 ######################################################################
@@ -90,6 +45,9 @@ class Repository(factory.Factory):
 
   # Cached contents to avoid multiple requests for the same data.
   __cachedUriContents = {}
+
+  # Dictionary of defaults.
+  __defaults = None
 
   ####################################################################
   # Public methods
@@ -140,6 +98,16 @@ class Repository(factory.Factory):
   ####################################################################
   # Protected methods
   ####################################################################
+  @classmethod
+  def _defaults(cls):
+    if cls.__defaults is None:
+      cls.__defaults = defaults.Defaults(os.path.join(
+                                  os.path.dirname(
+                                    os.path.realpath(__file__)),
+                                  "defaults.yml"))
+    return cls.__defaults
+
+  ####################################################################
   def _agnosticLatest(self, architecture):
     return self.__privateAgnosticRoots(self._categoryLatest(architecture),
                                        functools.partial(
@@ -186,72 +154,6 @@ class Repository(factory.Factory):
                                           self. _filterNonExistentArchitecture,
                                           self._agnosticReleased(architecture),
                                           architecture))
-
-  ####################################################################
-  def _beakerRoot(self, family, name, variant):
-    beaker = None
-    command = ["bkr", "distro-trees-list", "--family", family,
-               "--name", name, "--format", "json"]
-    try:
-      # Use universal_newlines to force python3 to return strings.
-      beaker = subprocess.Popen(command, stdout = subprocess.PIPE,
-                                universal_newlines = True)
-    except OSError as ex:
-      if ex.errno != errno.ENOENT:
-        raise
-      raise RepositoryBeakerNotFound
-
-    (stdout, _) = beaker.communicate()
-    if beaker.returncode != 0:
-      if beaker.returncode == 1:
-        raise RepositoryBeakerNoDistroTree(family)
-      raise RepositoryException(
-              "beaker unexpected failure; return code = {0}".format(
-                                                          beaker.returncode))
-
-    distros = list(filter(lambda x: x["variant"] == variant,
-                          json.loads(stdout)))
-
-    # Preferentially use http links from Boston beaker controller.
-    available = []
-    for entry in distros:
-      available = list(filter(lambda x: x[0].endswith("bos.redhat.com")
-                                          and x[1].startswith("http"),
-                              entry["available"]))
-      available = [ x[1].rsplit("/{0}/{1}/os".format(variant,
-                                                     entry["arch"]), 1)[0]
-                    for x in available]
-      if len(available) > 0:
-        break
-
-    # If not Boston try RDU.
-    if len(available) == 0:
-      for entry in distros:
-        available = list(filter(lambda x: x[0].endswith("rdu.redhat.com")
-                                            and x[1].startswith("http"),
-                                entry["available"]))
-        available = [ x[1].rsplit("/{0}/{1}/os".format(variant,
-                                                       entry["arch"]), 1)[0]
-                      for x in available]
-        if len(available) > 0:
-          break
-
-    # If not Boston nor RDU take whatever we can get.
-    if len(available) == 0:
-      for entry in distros:
-        available = list(filter(lambda x: x[1].startswith("http"),
-                                entry["available"]))
-        available = [ x[1].rsplit("/{0}/{1}/os".format(variant,
-                                                       entry["arch"]), 1)[0]
-                      for x in available]
-        if len(available) > 0:
-          break
-
-    return None if len(available) == 0 else available[0]
-
-  ####################################################################
-  def _beakerRoots(self):
-    raise NotImplementedError
 
   ####################################################################
   def _cachedLatest(self, architecture = None):
@@ -327,25 +229,50 @@ class Repository(factory.Factory):
 
   ####################################################################
   def _host(self):
-    raise NotImplementedError
+    return self._releasedHost()
 
   ####################################################################
   def _latestStartingPath(self, architecture = None):
-    return self._releasedStartingPath(architecture)
+    path = self._defaults().content([self.name().lower(), "paths", "latest"])
+    if path is not None:
+      path = "{0}{1}".format(self._startingPathPrefix(architecture), path)
+    else:
+      path = self._releasedStartingPath(architecture)
+    return path
 
   ####################################################################
   def _nightlyStartingPath(self, architecture = None):
-    return self._releasedStartingPath(architecture)
+    path = self._defaults().content([self.name().lower(), "paths", "nightly"])
+    if path is not None:
+      path = "{0}{1}".format(self._startingPathPrefix(architecture), path)
+    else:
+      path = self._latestStartingPath(architecture)
+    return path
+
+  ####################################################################
+  def _releasedHost(self):
+    host = self._defaults().content([self.name().lower(), "hosts", "released"])
+    return host
 
   ####################################################################
   def _releasedStartingPath(self, architecture = None):
-    raise NotImplementedError
+    path = self._defaults().content([self.name().lower(), "paths", "released"])
+    if path is not None:
+      path = "{0}{1}".format(self._startingPathPrefix(architecture), path)
+    return path
 
   ####################################################################
   def _path_contents(self, path = None):
+    contents = ""
     if path is None:
       path = self._releasedStartingPath()
-    return self._uri_contents("http://{0}{1}".format(self._host(), path))
+    if (path is not None) and (self._host() is not None):
+      contents = self._uri_contents("http://{0}{1}".format(self._host(), path))
+    return contents
+
+  ####################################################################
+  def _startingPathPrefix(self, architecture):
+    return ""
 
   ####################################################################
   def _uri_contents(self, uri, retries = 3):
