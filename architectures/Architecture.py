@@ -4,9 +4,7 @@ import defaults
 import factory
 
 ########################################################################
-class Architecture(factory.Factory):
-  __defaults = None
-
+class Architecture(factory.Factory, defaults.DefaultsFileInfo):
   ####################################################################
   # Public methods
   ####################################################################
@@ -44,22 +42,15 @@ class Architecture(factory.Factory):
   ####################################################################
   @classmethod
   def _defaultChoice(cls):
-    defaultArchitecture = cls._defaults().content(["architecture"]).lower()
+    defaultArchitecture = cls.defaults().content(["architecture"]).lower()
     return list(filter(lambda x: x.name().lower() == defaultArchitecture,
                        cls.choices()))[0]
 
   ####################################################################
   # Protected methods
   ####################################################################
-  @classmethod
-  def _defaults(cls):
-    if cls.__defaults is None:
-      cls.__defaults = defaults.Defaults(os.path.join(
-                                  os.path.dirname(
-                                    os.path.realpath(__file__)),
-                                  "defaults.yml"))
-    return cls.__defaults
 
   ####################################################################
   # Private methods
   ####################################################################
+
