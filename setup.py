@@ -24,9 +24,9 @@ def versioned(src):
 
 setup = functools.partial(
           setuptools.setup,
-          name = prefixed("architectures"),
-          version = "1.1.1",
-          description = prefixed("architectures"),
+          name = python_prefixed("architectures"),
+          version = "1.1.2",
+          description = python_prefixed("architectures"),
           author = "Joe Shimkus",
           author_email = "jshimkus@redhat.com",
           packages = setuptools.find_packages(exclude = []),
@@ -34,7 +34,8 @@ setup = functools.partial(
             "console_scripts" :
               "{0} = architectures:arches".format(versioned("arches"))
           },
-          install_requires = [prefixed("defaults"), prefixed ("factory")]
+          install_requires = [python_prefixed("defaults"),
+                              python_prefixed ("factory")]
         )
 
 # If the defaults file is in the package we have to prevent it from being
