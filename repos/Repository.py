@@ -27,7 +27,7 @@ import factory
 
 ######################################################################
 ######################################################################
-class Repository(factory.Factory):
+class Repository(factory.Factory, defaults.DefaultsFileInfo):
   # We cache the results of determining the various roots to avoid
   # having to constantly perform network queries.
   #
@@ -45,9 +45,6 @@ class Repository(factory.Factory):
 
   # Cached contents to avoid multiple requests for the same data.
   __cachedUriContents = {}
-
-  # Dictionary of defaults.
-  __defaults = None
 
   ####################################################################
   # Public methods
@@ -97,16 +94,6 @@ class Repository(factory.Factory):
 
   ####################################################################
   # Protected methods
-  ####################################################################
-  @classmethod
-  def _defaults(cls):
-    if cls.__defaults is None:
-      cls.__defaults = defaults.Defaults(os.path.join(
-                                  os.path.dirname(
-                                    os.path.realpath(__file__)),
-                                  "defaults.yml"))
-    return cls.__defaults
-
   ####################################################################
   def _agnosticLatest(self, architecture):
     return self.__privateAgnosticRoots(self._categoryLatest(architecture),
@@ -233,7 +220,7 @@ class Repository(factory.Factory):
 
   ####################################################################
   def _latestStartingPath(self, architecture = None):
-    path = self._defaults().content([self.name().lower(), "paths", "latest"])
+    path = self.defaults().content([self.name().lower(), "paths", "latest"])
     if path is not None:
       path = "{0}{1}".format(self._startingPathPrefix(architecture), path)
     else:
@@ -242,7 +229,7 @@ class Repository(factory.Factory):
 
   ####################################################################
   def _nightlyStartingPath(self, architecture = None):
-    path = self._defaults().content([self.name().lower(), "paths", "nightly"])
+    path = self.defaults().content([self.name().lower(), "paths", "nightly"])
     if path is not None:
       path = "{0}{1}".format(self._startingPathPrefix(architecture), path)
     else:
@@ -251,12 +238,12 @@ class Repository(factory.Factory):
 
   ####################################################################
   def _releasedHost(self):
-    host = self._defaults().content([self.name().lower(), "hosts", "released"])
+    host = self.defaults().content([self.name().lower(), "hosts", "released"])
     return host
 
   ####################################################################
   def _releasedStartingPath(self, architecture = None):
-    path = self._defaults().content([self.name().lower(), "paths", "released"])
+    path = self.defaults().content([self.name().lower(), "paths", "released"])
     if path is not None:
       path = "{0}{1}".format(self._startingPathPrefix(architecture), path)
     return path
