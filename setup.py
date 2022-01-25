@@ -47,13 +47,12 @@ with open(os.path.join(".", package_name, config_file_name)) as f:
           )
 
   # If there is a defaults file we need to install it in the correct location.
+  package_data_files = [config_file_name]
   if defaultsFileName is not None:
     # If the install directory is None the defaults file is installed as part
     # of the package.  If not, that's where the defaults is to be installed.
     if defaultsInstallDir is None:
-      setup = functools.partial(
-                setup,
-                package_data = { package_name : [defaultsFileName] })
+      package_data_files.append(defaultsFileName)
     else:
       setup = functools.partial(
                 setup,
@@ -61,4 +60,4 @@ with open(os.path.join(".", package_name, config_file_name)) as f:
                               [os.path.join(package_name, defaultsFileName)])])
 
   # Execute setup.
-  setup()
+  setup(package_data = { package_name : package_data_files })
