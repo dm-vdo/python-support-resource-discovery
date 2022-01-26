@@ -16,6 +16,7 @@ BuildArch: noarch
 
 # Build dependencies
 BuildRequires: python3
+BuildRequires: python3-pyyaml
 BuildRequires: python-setuptools
 
 # Runtime dependencies

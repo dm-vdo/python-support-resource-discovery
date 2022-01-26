@@ -1,8 +1,14 @@
 #!/usr/bin/env python
 
+import functools
+import os
 import platform
 import setuptools
 import sys
+import yaml
+
+package_name = "architectures"
+config_file_name = "config.yml"
 
 def prefixed(src):
   if ("bdist_wheel" not in sys.argv) or ("--universal" not in sys.argv):
@@ -18,17 +24,40 @@ def versioned(src):
     python_version = ""
   return "{0}{1}".format(src, python_version)
 
-setuptools.setup(
-  name = prefixed("architectures"),
-  version = "1.1.0",
-  description = prefixed("architectures"),
-  author = "Joe Shimkus",
-  author_email = "jshimkus@redhat.com",
-  packages = setuptools.find_packages(exclude = []),
-  package_data = { "architectures" : ["defaults.yml"] },
-  entry_points = {
-    "console_scripts" :
-      "{0} = architectures:arches".format(versioned("arches"))
-  },
-  install_requires = [prefixed("defaults"), prefixed ("factory")]
-)
+with open(os.path.join(".", package_name, config_file_name)) as f:
+  defaults = yaml.safe_load(f)["config"]["defaults"]
+  defaultsFileName = defaults["name"]
+  defaultsInstallDir = defaults["install-dir"]
+
+  setup = functools.partial(
+            setuptools.setup,
+            name = python_prefixed(package_name),
+            version = "1.1.2",
+            description = python_prefixed(package_name),
+            author = "Joe Shimkus",
+            author_email = "jshimkus@redhat.com",
+            packages = setuptools.find_packages(exclude = []),
+            entry_points = {
+              "console_scripts" :
+                "{0} = {1}:arches".format(versioned("arches"), package_name)
+            },
+            install_requires = [python_prefixed("defaults"),
+                                python_prefixed ("factory")],
+            zip_safe = False
+          )
+
+  # If there is a defaults file we need to install it in the correct location.
+  package_data_files = [config_file_name]
+  if defaultsFileName is not None:
+    # If the install directory is None the defaults file is installed as part
+    # of the package.  If not, that's where the defaults is to be installed.
+    if defaultsInstallDir is None:
+      package_data_files.append(defaultsFileName)
+    else:
+      setup = functools.partial(
+                setup,
+                data_files = [(defaultsInstallDir,
+                              [os.path.join(package_name, defaultsFileName)])])
+
+  # Execute setup.
+  setup(package_data = { package_name : package_data_files })
