@@ -86,7 +86,7 @@ class Fedora(Repository):
 
   ####################################################################
   def _archivedHost(self):
-    return self._defaults().content([self.name().lower(), "hosts", "archived"])
+    return self.defaults().content([self.name().lower(), "hosts", "archived"])
 
   ####################################################################
   def _availableUri(self, path, version):
