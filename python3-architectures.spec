@@ -1,6 +1,6 @@
 %define name python3-architectures
-%define version 1.0.0
-%define unmangled_version 1.0.0
+%define version 1.1.2
+%define unmangled_version 1.1.2
 %define release 1
 
 Summary: python3-architectures
