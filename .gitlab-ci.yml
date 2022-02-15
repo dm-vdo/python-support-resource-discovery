@@ -2,9 +2,9 @@ stages:
     - build
 
 build-architectures:
-    # Only run on the master branch.
+    # Only run on the main branch.
     only:
-      - master
+      - main
 
     stage: build
 
