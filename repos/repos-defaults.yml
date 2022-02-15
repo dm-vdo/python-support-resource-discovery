@@ -35,12 +35,12 @@ defaults:
   # The defaults for CentOS repo discovery.
   centos:
     hosts:
-      released:
+      released: mirror.stream.centos.org
 
     paths:
       latest:
       nightly:
-      released:
+      released: ""
 
   # The defaults for Fedora repo discovery.
   fedora:
