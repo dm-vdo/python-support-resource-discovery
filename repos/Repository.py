@@ -15,6 +15,7 @@ import argparse
 import errno
 import functools
 import json
+import logging
 import os
 import socket
 import subprocess
@@ -24,6 +25,8 @@ import time
 import architectures
 import defaults
 import factory
+
+log = logging.getLogger(__name__)
 
 ######################################################################
 ######################################################################
@@ -266,6 +269,7 @@ class Repository(factory.Factory, defaults.DefaultsFileInfo):
     if not uri.endswith("/"):
       uri = "{0}/".format(uri)
     if uri not in self.__cachedUriContents:
+      log.debug("retrieving contents from uri: {0}".format(uri))
       parsed = urlparse.urlparse(uri)
       for iteration in range(retries):
         try:
@@ -275,10 +279,16 @@ class Repository(factory.Factory, defaults.DefaultsFileInfo):
           if response.status == 200:
             self.__cachedUriContents[uri] = response.read().decode("UTF-8")
             break
+          log.debug("response status {0} on iteration {1}; retrying..."
+                      .format(response.status, iteration))
         except (socket.gaierror, socket.timeout):
           if iteration >= (retries - 1):
+            log.debug("socket error; retries exhausted; re-raising exception")
             raise
+          log.debug("socket error on iteration {0}; retrying..."
+                      .format(iteration))
       else: # for
+        log.debug("retries exhausted; caching empty contents")
         self.__cachedUriContents[uri] = ""
 
     return self.__cachedUriContents[uri]
@@ -300,9 +310,8 @@ class Repository(factory.Factory, defaults.DefaultsFileInfo):
         roots = self.__privateLoadFile(openFile,
                                       forceScan = self.args.forceScan)
         if roots is None:
-          print("Updating saved {0} {1} repos".format(self.className(),
-                                                      category),
-                file = sys.stderr)
+          log.info("Updating saved {0} {1} repos".format(self.className(),
+                                                         category))
           self.__privateSaveFile(openFile, finder())
           roots = self.__privateLoadFile(openFile)
         self.__agnosticRoots[category] = roots
@@ -325,10 +334,9 @@ class Repository(factory.Factory, defaults.DefaultsFileInfo):
       roots = self.__privateLoadFile(openFile, mtime,
                                      forceScan = self.args.forceScan)
       if roots is None:
-        print("Updating saved {0} {1} {2} repos ".format(self.className(),
-                                                         category,
-                                                         architecture),
-              file = sys.stderr)
+        log.info("Updating saved {0} {1} {2} repos ".format(self.className(),
+                                                            category,
+                                                            architecture))
         self.__privateSaveFile(openFile, finder())
         roots = self.__privateLoadFile(openFile)
     finally:

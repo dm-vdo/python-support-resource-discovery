@@ -33,7 +33,7 @@ with open(os.path.join(".", package_name, config_file_name)) as f:
   setup = functools.partial(
             setuptools.setup,
             name = python_prefixed(package_name),
-            version = "2.0.2",
+            version = "2.0.3",
             description = python_prefixed(package_name),
             author = "Joe Shimkus",
             author_email = "jshimkus@redhat.com",
