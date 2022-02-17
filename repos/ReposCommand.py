@@ -58,10 +58,8 @@ class ReposCommand(command.Command):
   def run(self):
     all = not (self.args.latest or self.args.nightly or self.args.released)
 
-    instanceArgs = argparse.Namespace(forceScan = self.args.forceScan)
-
     for choice in Repository.choices():
-      instance = Repository.makeItem(choice.name(), instanceArgs)
+      instance = Repository.makeItem(choice.name(), self.args)
       for architecture in architectures.Architecture.choices():
         if all or self.args.released:
           print("{0} {1} released roots:".format(instance.name(),

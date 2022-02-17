@@ -1,6 +1,6 @@
 %define name python3-repos
-%define version 2.0.2
-%define unmangled_version 2.0.2
+%define version 2.0.3
+%define unmangled_version 2.0.3
 %define release 1
 
 Summary: python3-repos
