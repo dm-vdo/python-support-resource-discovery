@@ -1,14 +1,17 @@
-%define name python3-repos
+%define repo_name repos
+%define repo_branch main
+
+%define name python3-%{repo_name}
 %define version 2.0.3
 %define unmangled_version 2.0.3
 %define release 1
 
-Summary: python3-repos
+Summary: %{name}
 Name: %{name}
 Version: %{version}
 Release: %{release}
-URL: https://gitlab.cee.redhat.com/vdo/open-sourcing/python/support/repos
-Source0: %{url}/-/archive/main/repos-main.tar.gz
+URL: https://gitlab.cee.redhat.com/vdo/open-sourcing/python/support/%{repo_name}
+Source0: %{url}/-/archive/%{repo_branch}/%{repo_name}-%{repo_branch}.tar.gz
 License: UNKNOWN
 Group: Development/Libraries
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
@@ -28,7 +31,7 @@ Requires: python3-command
 UNKNOWN
 
 %prep
-%setup -n %{name}-%{unmangled_version} -n %{name}-%{unmangled_version}
+%setup -n %{repo_name}-%{repo_branch}
 
 %build
 python3 setup.py build
