@@ -7,7 +7,8 @@ Summary: python3-architectures
 Name: %{name}
 Version: %{version}
 Release: %{release}
-Source0: %{name}-%{unmangled_version}.tar.gz
+URL: https://gitlab.cee.redhat.com/vdo/open-sourcing/python/support/architectures
+Source0: %{url}/-/archive/main/architectures-main.tar.gz
 License: UNKNOWN
 Group: Development/Libraries
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-buildroot
