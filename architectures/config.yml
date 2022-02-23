@@ -15,4 +15,4 @@ config:
     # as package data.
     # If it is specified it is the full path to the directory in which it
     # is installed.
-    install-dir:
+    install-dir: /etc/permabit/python/support
