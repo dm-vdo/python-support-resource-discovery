@@ -43,8 +43,12 @@ class Architecture(factory.Factory, defaults.DefaultsFileInfo):
   @classmethod
   def _defaultChoice(cls):
     defaultArchitecture = cls.defaults(["architecture"]).lower()
-    return list(filter(lambda x: x.name().lower() == defaultArchitecture,
-                       cls.choices()))[0]
+
+    if not cls._isItemAvailable(defaultArchitecture):
+      raise ValueError("default architecture '{0}' not known"
+                        .format(defaultArchitecture))
+
+    return defaultArchitecture
 
   ####################################################################
   # Protected methods
