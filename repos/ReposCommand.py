@@ -59,22 +59,22 @@ class ReposCommand(command.Command):
     all = not (self.args.latest or self.args.nightly or self.args.released)
 
     for choice in Repository.choices():
-      instance = Repository.makeItem(choice.name(), self.args)
+      instance = Repository.makeItem(choice, self.args)
       for architecture in architectures.Architecture.choices():
         if all or self.args.released:
           print("{0} {1} released roots:".format(instance.name(),
-                                                 architecture.name()))
-          print(yaml.safe_dump(instance.availableRoots(architecture.name()),
+                                                 architecture))
+          print(yaml.safe_dump(instance.availableRoots(architecture),
                                default_flow_style = False))
         if all or self.args.latest:
           print("{0} {1} latest roots:".format(instance.name(),
-                                               architecture.name()))
-          print(yaml.safe_dump(instance.availableLatestRoots(architecture.name()),
+                                               architecture))
+          print(yaml.safe_dump(instance.availableLatestRoots(architecture),
                                default_flow_style = False))
         if all or self.args.nightly:
           print("{0} {1} nightly roots:".format(instance.name(),
-                                                architecture.name()))
-          print(yaml.safe_dump(instance.availableNightlyRoots(architecture.name()),
+                                                architecture))
+          print(yaml.safe_dump(instance.availableNightlyRoots(architecture),
                                default_flow_style = False))
 
   ####################################################################

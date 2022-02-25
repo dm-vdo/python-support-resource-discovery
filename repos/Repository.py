@@ -154,7 +154,7 @@ class Repository(factory.Factory, defaults.DefaultsFileInfo):
     if self.__cachedLatest is None:
       self.__cachedLatest = {}
     if architecture is None:
-      architecture = architectures.Architecture.defaultChoice().name()
+      architecture = architectures.Architecture.defaultChoice()
     if architecture not in self.__cachedLatest:
       self.__cachedLatest[architecture] = self._availableLatest(architecture)
     return self.__cachedLatest[architecture].copy()
@@ -164,7 +164,7 @@ class Repository(factory.Factory, defaults.DefaultsFileInfo):
     if self.__cachedNightly is None:
       self.__cachedNightly = {}
     if architecture is None:
-      architecture = architectures.Architecture.defaultChoice().name()
+      architecture = architectures.Architecture.defaultChoice()
     if architecture not in self.__cachedNightly:
       self.__cachedNightly[architecture] = self._availableNightly(architecture)
     return self.__cachedNightly[architecture].copy()
@@ -174,7 +174,7 @@ class Repository(factory.Factory, defaults.DefaultsFileInfo):
     if self.__cachedReleased is None:
       self.__cachedReleased = {}
     if architecture is None:
-      architecture = architectures.Architecture.defaultChoice().name()
+      architecture = architectures.Architecture.defaultChoice()
     if architecture not in self.__cachedReleased:
       self.__cachedReleased[architecture] = self._availableReleased(
                                                                 architecture)
