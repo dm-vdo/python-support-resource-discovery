@@ -227,7 +227,7 @@ class Repository(factory.Factory, defaults.DefaultsFileInfo):
 
   ####################################################################
   def _latestStartingPath(self, architecture = None):
-    path = self.defaults().content([self.name().lower(), "paths", "latest"])
+    path = self.defaults([self.name().lower(), "paths", "latest"])
     if path is not None:
       path = "{0}{1}".format(self._startingPathPrefix(architecture), path)
     else:
@@ -236,7 +236,7 @@ class Repository(factory.Factory, defaults.DefaultsFileInfo):
 
   ####################################################################
   def _nightlyStartingPath(self, architecture = None):
-    path = self.defaults().content([self.name().lower(), "paths", "nightly"])
+    path = self.defaults([self.name().lower(), "paths", "nightly"])
     if path is not None:
       path = "{0}{1}".format(self._startingPathPrefix(architecture), path)
     else:
@@ -245,12 +245,12 @@ class Repository(factory.Factory, defaults.DefaultsFileInfo):
 
   ####################################################################
   def _releasedHost(self):
-    host = self.defaults().content([self.name().lower(), "hosts", "released"])
+    host = self.defaults([self.name().lower(), "hosts", "released"])
     return host
 
   ####################################################################
   def _releasedStartingPath(self, architecture = None):
-    path = self.defaults().content([self.name().lower(), "paths", "released"])
+    path = self.defaults([self.name().lower(), "paths", "released"])
     if path is not None:
       path = "{0}{1}".format(self._startingPathPrefix(architecture), path)
     return path
@@ -352,7 +352,7 @@ class Repository(factory.Factory, defaults.DefaultsFileInfo):
   def __privateCacheRefresh(self):
     if self.__cacheRefresh is None:
       try:
-        self.__cacheRefresh = self.defaults().content(["cache", "refresh"])
+        self.__cacheRefresh = self.defaults(["cache", "refresh"])
       except defaults.DefaultsException as ex:
         log.warn("exception accessing defaults: {0}".format(ex))
         log.info("using default refresh: 1 day")
@@ -394,8 +394,7 @@ class Repository(factory.Factory, defaults.DefaultsFileInfo):
   def __privateCacheRoot(self):
     if self.__cacheRoot is None:
       try:
-        self.__cacheRoot = self.defaults().content(["cache", "directories",
-                                                    "root"])
+        self.__cacheRoot = self.defaults(["cache", "directories", "root"])
       except defaults.DefaultsException as ex:
         log.warn("exception accessing defaults: {0}".format(ex))
         log.info("using default root: {0}".format(os.environ["HOME"]))
@@ -415,8 +414,8 @@ class Repository(factory.Factory, defaults.DefaultsFileInfo):
   def __privateCacheSubdir(self):
     if self.__cacheSubdir is None:
       try:
-        self.__cacheSubdir = self.defaults().content(["cache", "directories",
-                                                      "subdirectory"])
+        self.__cacheSubdir = self.defaults(["cache", "directories",
+                                            "subdirectory"])
       except defaults.DefaultsException as ex:
         log.warn("exception accessing defaults: {0}".format(ex))
         log.info("using default subdirectory: .python-repos-cache")

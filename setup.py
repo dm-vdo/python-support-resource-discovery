@@ -33,7 +33,7 @@ with open(os.path.join(".", package_name, config_file_name)) as f:
   setup = functools.partial(
             setuptools.setup,
             name = python_prefixed(package_name),
-            version = "2.0.5",
+            version = "2.0.6",
             description = python_prefixed(package_name),
             author = "Joe Shimkus",
             author_email = "jshimkus@redhat.com",
@@ -44,7 +44,8 @@ with open(os.path.join(".", package_name, config_file_name)) as f:
             },
             install_requires = [python_prefixed("architectures"),
                                 python_prefixed("command"),
-                                python_prefixed("defaults")],
+                                "{0} >= 2.0.0"
+                                  .format(python_prefixed("defaults"))],
             zip_safe = False
           )
 
