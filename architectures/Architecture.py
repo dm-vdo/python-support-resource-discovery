@@ -42,7 +42,7 @@ class Architecture(factory.Factory, defaults.DefaultsFileInfo):
   ####################################################################
   @classmethod
   def _defaultChoice(cls):
-    defaultArchitecture = cls.defaults().content(["architecture"]).lower()
+    defaultArchitecture = cls.defaults(["architecture"]).lower()
     return list(filter(lambda x: x.name().lower() == defaultArchitecture,
                        cls.choices()))[0]
 
