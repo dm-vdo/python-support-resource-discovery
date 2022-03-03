@@ -14,6 +14,7 @@ else:
 import argparse
 import errno
 import functools
+import itertools
 import json
 import logging
 import os
@@ -93,6 +94,9 @@ class Repository(factory.Factory, defaults.DefaultsFileInfo):
   def __init__(self, args = None):
     if args is None:
       args = self._defaultArguments()
+    self.__cacheRoot = None
+    self.__cacheSubdir = None
+    self.__cacheRefresh = None
     super(Repository, self).__init__(args)
 
   ####################################################################
@@ -344,9 +348,89 @@ class Repository(factory.Factory, defaults.DefaultsFileInfo):
     return roots
 
   ####################################################################
+  @property
+  def __privateCacheRefresh(self):
+    if self.__cacheRefresh is None:
+      try:
+        self.__cacheRefresh = self.defaults().content(["cache", "refresh"])
+      except defaults.DefaultsException as ex:
+        log.warn("exception accessing defaults: {0}".format(ex))
+        log.info("using default refresh: 1 day")
+
+      if self.__cacheRefresh is None:
+        self.__cacheRefresh = "1-0-0"
+
+      refresh = self.__cacheRefresh.split("-")
+      if len(refresh) > 3:
+        log.warn("more than three refresh fields specified: {0}"
+                  .format(self.__cacheRefresh))
+        refresh = refresh[-3:]
+        log.info("using rightmost fields as refresh: {0}"
+                  .format("-".join(refresh)))
+
+      try:
+        refresh = list(map(lambda x: int(x), refresh))
+      except ValueError:
+        log.warn("could not convert one or more fields to integers: {0}"
+                  .format("-".join(refresh)))
+        log.info("using default refresh: 1 day")
+        refresh = [1, 0, 0]
+
+      refresh.reverse()
+      refresh = dict(itertools.zip_longest(("minutes", "hours", "days"),
+                                           refresh, fillvalue = 0))
+
+      self.__cacheRefresh = ((refresh["days"] * 86400)
+                              + (refresh["hours"] * 3600)
+                              + (refresh["minutes"] * 60))
+      if self.__cacheRefresh < 60:
+        log.debug("forcing refresh minimum: 1 minute")
+        self.__cacheRefresh = 60
+
+    return self.__cacheRefresh
+
+  ####################################################################
+  @property
+  def __privateCacheRoot(self):
+    if self.__cacheRoot is None:
+      try:
+        self.__cacheRoot = self.defaults().content(["cache", "directories",
+                                                    "root"])
+      except defaults.DefaultsException as ex:
+        log.warn("exception accessing defaults: {0}".format(ex))
+        log.info("using default root: {0}".format(os.environ["HOME"]))
+
+      if self.__cacheRoot is None:
+        self.__cacheRoot = os.environ["HOME"]
+      self.__cacheRoot = os.path.expanduser(self.__cacheRoot)
+      if not os.path.isabs(self.__cacheRoot):
+        log.warn("root is not absolute path: {0}".format(self.__cacheRoot))
+        log.info("using default root: {0}".format(os.environ["HOME"]))
+        self.__cacheRoot = os.environ["HOME"]
+
+    return self.__cacheRoot
+
+  ####################################################################
+  @property
+  def __privateCacheSubdir(self):
+    if self.__cacheSubdir is None:
+      try:
+        self.__cacheSubdir = self.defaults().content(["cache", "directories",
+                                                      "subdirectory"])
+      except defaults.DefaultsException as ex:
+        log.warn("exception accessing defaults: {0}".format(ex))
+        log.info("using default subdirectory: .python-repos-cache")
+
+      if self.__cacheSubdir is None:
+        self.__cacheSubdir = ".python-repos-cache"
+
+    return self.__cacheSubdir
+
+  ####################################################################
   def __privateDirPath(self):
-    return os.path.sep.join([os.environ["HOME"], ".python-infrastructure",
-                             "repos", self.className()])
+    return os.path.sep.join([self.__privateCacheRoot,
+                             self.__privateCacheSubdir,
+                             self.className()])
 
   ####################################################################
   def __privateFileMtime(self, openFile):
@@ -364,7 +448,7 @@ class Repository(factory.Factory, defaults.DefaultsFileInfo):
     if (forceScan
         or ((dependencyMtime is not None)
             and (dependencyMtime > stats.st_mtime))
-        or ((time.time() - stats.st_mtime) >= 86400)):
+        or ((time.time() - stats.st_mtime) >= self.__privateCacheRefresh)):
       openFile.truncate()
     elif stats.st_size > 0:
       # Seek to zero in case this is a load after a save.

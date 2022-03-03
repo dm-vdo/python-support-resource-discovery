@@ -32,6 +32,32 @@
 # The result of this aggregation is that each set contains the discovered
 # repositories that most closely match the above described path interpretations.
 defaults:
+  # Repos are discovered dynamically and can be a relatively lengthy process.
+  # Rather than perform discovery every time repos is used it caches the
+  # discovered repos to speed up subsequent uses.  The following defaults allow
+  # customization of the cache.
+  cache:
+    directories:
+      # The path to the directory in which to cache the repo info.
+      # Must specify a full-path; use of ~ for user's home is supported.
+      # DEFAULT: $HOME.
+      root:
+      # The sub-directory of root to use for the cache.
+      # DEFAULT:.python-repos-cache
+      subdirectory:
+
+    # How frequently to refresh the cache.
+    # Format is <days>-<hours>-<minutes>
+    # Each field is an arbitrary integer; e.g., one day could be specified
+    # as 24 hours.
+    # Fields are interpreted right-to-left.  That is...
+    #  a single number is interpreted as minutes
+    #  h-m is interpreted as h hours and m minutes
+    #  d-h-m is interpreted as d days, h hours and m minutes
+    # DEFAULT: one day; i.e., 1-0-0
+    # A minimum of 1 minute is imposed.
+    refresh:
+
   # The defaults for CentOS repo discovery.
   centos:
     hosts:
