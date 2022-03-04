@@ -2,8 +2,8 @@
 %define repo_branch main
 
 %define name python3-%{repo_name}
-%define version 2.0.4
-%define unmangled_version 2.0.4
+%define version 2.0.5
+%define unmangled_version 2.0.5
 %define release 1
 
 Summary: %{name}
