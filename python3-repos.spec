@@ -2,8 +2,8 @@
 %define repo_branch main
 
 %define name python3-%{repo_name}
-%define version 2.0.6
-%define unmangled_version 2.0.6
+%define version 3.0.0
+%define unmangled_version 3.0.0
 %define release 1
 
 Summary: %{name}
@@ -24,8 +24,8 @@ BuildRequires: python3-pyyaml
 BuildRequires: python-setuptools
 
 # Runtime dependencies
-Requires: python3-architectures
-Requires: python3-command
+Requires: python3-architectures >= 2
+Requires: python3-command >= 2
 
 %description
 UNKNOWN
