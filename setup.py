@@ -33,7 +33,7 @@ with open(os.path.join(".", package_name, config_file_name)) as f:
   setup = functools.partial(
             setuptools.setup,
             name = python_prefixed(package_name),
-            version = "2.0.6",
+            version = "3.0.0",
             description = python_prefixed(package_name),
             author = "Joe Shimkus",
             author_email = "jshimkus@redhat.com",
@@ -42,9 +42,11 @@ with open(os.path.join(".", package_name, config_file_name)) as f:
               "console_scripts" :
                 "{0} = repos:repos".format(versioned("repos"))
             },
-            install_requires = [python_prefixed("architectures"),
-                                python_prefixed("command"),
-                                "{0} >= 2.0.0"
+            install_requires = ["{0} >= 2"
+                                  .format(python_prefixed("architectures")),
+                                "{0} >= 2"
+                                  .format(python_prefixed("command")),
+                                "{0} >= 2"
                                   .format(python_prefixed("defaults"))],
             zip_safe = False
           )
