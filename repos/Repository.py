@@ -283,16 +283,15 @@ class Repository(factory.Factory, defaults.DefaultsFileInfo):
           if response.status == 200:
             self.__cachedUriContents[uri] = response.read().decode("UTF-8")
             break
-          log.debug("response status {0} on iteration {1}; retrying..."
+          log.debug("response status {0} on iteration {1}"
                       .format(response.status, iteration))
         except (socket.gaierror, socket.timeout):
-          if iteration >= (retries - 1):
-            log.debug("socket error; retries exhausted; re-raising exception")
-            raise
-          log.debug("socket error on iteration {0}; retrying..."
-                      .format(iteration))
+          log.debug("socket error on iteration {0}".format(iteration))
       else: # for
-        log.debug("retries exhausted; caching empty contents")
+        # We log this at info level because some distributions don't
+        # necessarily support all the architectures of potential interest.
+        log.info("retries exhausted; caching empty contents for {0}"
+                  .format(uri))
         self.__cachedUriContents[uri] = ""
 
     return self.__cachedUriContents[uri]
