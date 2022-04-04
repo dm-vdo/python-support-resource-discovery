@@ -1,7 +1,6 @@
 import os
 
-import defaults
-import factory
+from mill import defaults, factory
 
 ########################################################################
 class Architecture(factory.Factory, defaults.DefaultsFileInfo):

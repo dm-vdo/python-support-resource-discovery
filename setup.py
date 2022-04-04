@@ -32,7 +32,7 @@ with open(os.path.join(".", package_name, config_file_name)) as f:
   setup = functools.partial(
             setuptools.setup,
             name = python_prefixed(package_name),
-            version = "2.0.0",
+            version = "2.0.1",
             description = python_prefixed(package_name),
             author = "Joe Shimkus",
             author_email = "jshimkus@redhat.com",
@@ -41,10 +41,8 @@ with open(os.path.join(".", package_name, config_file_name)) as f:
               "console_scripts" :
                 "{0} = {1}:arches".format(versioned("arches"), package_name)
             },
-            install_requires = ["{0} >= 2"
-                                  .format(python_prefixed("defaults")),
-                                "{0} >= 3"
-                                  .format(python_prefixed ("factory"))],
+            install_requires = ["{0} >= 1.0.0"
+                                  .format(python_prefixed("utility-mill"))],
             zip_safe = False
           )
 
