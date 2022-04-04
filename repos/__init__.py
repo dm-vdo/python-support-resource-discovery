@@ -4,6 +4,6 @@ from .ReposCommand import ReposCommand
 from .Repository import Repository
 from .RHEL import RHEL
 
-import command
+from mill import command
 def repos():
   command.CommandShell(ReposCommand).run()

@@ -25,7 +25,7 @@ BuildRequires: python-setuptools
 
 # Runtime dependencies
 Requires: python3-architectures >= 2
-Requires: python3-command >= 2
+Requires: python3-utility-mill >= 1
 
 %description
 UNKNOWN
