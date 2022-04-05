@@ -310,13 +310,12 @@ class Repository(factory.Factory, defaults.DefaultsFileInfo):
       openFile = self.__privateOpenFile(
                   self.__privateAgnosticFileName(category))
       try:
-        roots = self.__privateLoadFile(openFile,
-                                      forceScan = self.args.forceScan)
-        if roots is None:
-          log.info("Updating saved {0} {1} repos".format(self.className(),
-                                                         category))
-          self.__privateSaveFile(openFile, finder())
-          roots = self.__privateLoadFile(openFile)
+        roots = self.__privateLoadFile(
+                  openFile,
+                  finder,
+                  "Updating saved {0} {1} repos".format(self.className(),
+                                                        category),
+                  forceScan = self.args.forceScan)
         self.__agnosticRoots[category] = roots
       finally:
         openFile.close()
@@ -328,20 +327,21 @@ class Repository(factory.Factory, defaults.DefaultsFileInfo):
 
   ####################################################################
   def __privateAvailableRoots(self, category, architecture, finder):
+    roots = None
     openFile = self.__privateOpenFile(
                  self.__privateAvailableFileName(category, architecture))
     try:
       with self.__privateOpenFile(
             self.__privateAgnosticFileName(category)) as f:
         mtime = self.__privateFileMtime(f)
-      roots = self.__privateLoadFile(openFile, mtime,
-                                     forceScan = self.args.forceScan)
-      if roots is None:
-        log.info("Updating saved {0} {1} {2} repos ".format(self.className(),
-                                                            category,
-                                                            architecture))
-        self.__privateSaveFile(openFile, finder())
-        roots = self.__privateLoadFile(openFile)
+      roots = self.__privateLoadFile(
+                openFile,
+                finder,
+                "Updating saved {0} {1} {2} repos ".format(self.className(),
+                                                           category,
+                                                           architecture),
+                mtime,
+                forceScan = self.args.forceScan)
     finally:
       openFile.close()
     return roots
@@ -436,22 +436,34 @@ class Repository(factory.Factory, defaults.DefaultsFileInfo):
     return stats.st_mtime
 
   ####################################################################
-  def __privateLoadFile(self, openFile, dependencyMtime = None,
-                        forceScan = False):
+  def __privateLoadFile(self, openFile, finder, logMessage,
+                        dependencyMtime = None, forceScan = False):
     roots = None
     stats = os.fstat(openFile.fileno())
-    # Truncate the file if we've been explicitly told to or its dependency is
-    # more recent than the file itself or it's been more than a day since it
-    # was updated.
-    if (forceScan
-        or ((dependencyMtime is not None)
-            and (dependencyMtime > stats.st_mtime))
-        or ((time.time() - stats.st_mtime) >= self.__privateCacheRefresh)):
-      openFile.truncate()
-    elif stats.st_size > 0:
-      # Seek to zero in case this is a load after a save.
+    # Truncate the file if ...
+    #   - we've been explicitly told to or
+    #   - its dependency is more recent than the file itself or
+    #   - it's been more than the cache refresh time since it was updated or
+    #   - it contains no actual data; this is either because it's a newly
+    #     created file or the previous check most likely encountered an error
+    forceScan = (forceScan
+                  or ((dependencyMtime is not None)
+                      and (dependencyMtime > stats.st_mtime))
+                  or ((time.time() - stats.st_mtime)
+                      >= self.__privateCacheRefresh)
+                  or (stats.st_size == 0))
+    if not forceScan:
+      roots = json.loads(openFile.read())
+      forceScan = len(roots) == 0
+
+    if forceScan:
+      log.info(logMessage)
+      openFile.truncate(0)
+      openFile.seek(0)
+      self.__privateSaveFile(openFile, finder())
       openFile.seek(0)
       roots = json.loads(openFile.read())
+
     return roots
 
   ####################################################################
