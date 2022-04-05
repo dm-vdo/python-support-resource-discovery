@@ -23,9 +23,8 @@ import subprocess
 import sys
 import time
 
+from mill import defaults, factory
 import architectures
-import defaults
-import factory
 
 log = logging.getLogger(__name__)
 

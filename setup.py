@@ -44,10 +44,8 @@ with open(os.path.join(".", package_name, config_file_name)) as f:
             },
             install_requires = ["{0} >= 2"
                                   .format(python_prefixed("architectures")),
-                                "{0} >= 2"
-                                  .format(python_prefixed("command")),
-                                "{0} >= 2"
-                                  .format(python_prefixed("defaults"))],
+                                "{0} >= 1.0.0"
+                                  .format(python_prefixed("utility-mill"))],
             zip_safe = False
           )
 
