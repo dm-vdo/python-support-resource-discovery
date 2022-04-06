@@ -1,7 +1,7 @@
 stages:
     - build
 
-build-architectures:
+build-resource-discovery:
     # Only run on the main branch.
     only:
       - main
@@ -9,7 +9,7 @@ build-architectures:
     stage: build
 
     variables:
-        REPO_DIR_NAME: "python-architectures"
+        REPO_DIR_NAME: "python-resource-discovery"
         REPO_SERVER_PIP_ROOT: $SERVER_PIP_ROOT_PATH$SERVER_PIP_SUB_PATH
 
     script:
