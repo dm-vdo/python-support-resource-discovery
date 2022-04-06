@@ -40,14 +40,21 @@ class CentOS(Repository):
       data = self._path_contents("{0}/".format(path))
 
       # Find all the released versions greater than or equal to the CentOS
-      # minimum major and then find their minors.
-      regex = r"(?i)<a\s+href=\"(centos-(\d+))/\">\1/</a>"
+      # minimum major then, for a RedHat source, find their minors.
+      redhat = self._host().endswith("redhat.com")
+      regex = (r"(?i)<a\s+href=\"(centos-(\d+))/\">\1/</a>"
+               if redhat else r"(?i)<a\s+href=\"((\d+)-stream)/\">\1/</a>")
       for release in filter(
                       lambda x: int(x[1]) >= self.__CENTOS_MINIMUM_MAJOR,
                       re.findall(regex, data)):
-        roots.update(self._availableReleasedMinors(
-                        "{0}/centos-{1}".format(path, release[1]),
-                        int(release[1])))
+        if redhat:
+          roots.update(self._availableReleasedMinors(
+                          "{0}/centos-{1}".format(path, release[1]),
+                          int(release[1])))
+        else:
+          roots[release[1]] = "http://{0}{1}/{2}".format(self._host(),
+                                                         path,
+                                                         release[0])
     return roots
 
   ####################################################################
