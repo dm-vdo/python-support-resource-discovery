@@ -30,7 +30,6 @@ BuildRequires: python39-pyyaml
 %else
 BuildRequires: python3
 BuildRequires: python3-devel
-BuildRequires: python3-eventlet
 BuildRequires: python3-py
 BuildRequires: python3-rpm-macros
 BuildRequires: python3-setuptools
