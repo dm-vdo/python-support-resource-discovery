@@ -8,7 +8,7 @@ import sys
 import yaml
 
 # package_version and the rpm .spec version are to be kept in sync.
-package_version = {"major": 1, "minor": 0, "patch": 13, "release": 2}
+package_version = {"major": 1, "minor": 0, "patch": 13, "release": 3}
 package_name = "resource-discovery"
 # Subdirectory containg packages.
 package_subdir = "discovery"

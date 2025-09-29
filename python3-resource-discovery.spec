@@ -5,7 +5,7 @@
 
 %define version 1.0.13
 %define unmangled_version 1.0.13
-%define release 2
+%define release 3
 
 Name: python3-%{modname}
 Version: %{version}
@@ -73,6 +73,9 @@ UNKNOWN
 %{python3_sitelib}/python3_resource_discovery-%{version}*
 
 %changelog
+* Mon Sep 29 2025 Chung Chung <cchung@redhat.com> - 1.0.13-3
+- Fixed content read failure when the default server protocol is HTTPS.
+
 * Wed Jul 19 2023 Joe Shimkus <jshimkus@redhat.com> - 1.0.13-2
 - Changed build setup per template.
 

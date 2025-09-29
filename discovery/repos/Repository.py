@@ -300,6 +300,16 @@ class Repository(factory.Factory, defaults.DefaultsFileInfo):
           if response.status == 200:
             self.__cachedUriContents[uri] = response.read().decode("UTF-8")
             break
+          elif response.status == 302:
+            # Get a redirect reponse, try connecting with HTTPS
+            connection = httplib.HTTPSConnection(parsed.netloc, timeout = 10)
+            connection.request("GET", parsed.path)
+            response = connection.getresponse()
+            if response.status == 200:
+              self.__cachedUriContents[uri] = response.read().decode("UTF-8")
+              break
+          else:
+            log.info(f'Failed to connect, response {response.status}')
           log.debug("response status {0} on iteration {1}"
                       .format(response.status, iteration))
           if (iteration < (retries - 1)):
